@@ -9,7 +9,6 @@ async function sha256(text) {
 }
 
 async function ensureDbSchema(db) {
-    // --- KUI 核心表 ---
     const initQueries = [
         `CREATE TABLE IF NOT EXISTS servers (ip TEXT PRIMARY KEY, name TEXT NOT NULL, cpu INTEGER DEFAULT 0, mem REAL DEFAULT 0, last_report INTEGER DEFAULT 0, alert_sent INTEGER DEFAULT 0, disk INTEGER DEFAULT 0, load TEXT DEFAULT "", uptime TEXT DEFAULT "", net_in_speed INTEGER DEFAULT 0, net_out_speed INTEGER DEFAULT 0, tcp_conn INTEGER DEFAULT 0, udp_conn INTEGER DEFAULT 0)`,
         `CREATE TABLE IF NOT EXISTS users (username TEXT PRIMARY KEY, password TEXT NOT NULL, traffic_limit INTEGER DEFAULT 0, traffic_used INTEGER DEFAULT 0, expire_time INTEGER DEFAULT 0, enable INTEGER DEFAULT 1, sub_token TEXT)`,
@@ -20,7 +19,6 @@ async function ensureDbSchema(db) {
     ];
     for (let query of initQueries) { try { await db.prepare(query).run(); } catch (e) {} }
 
-    // --- 探针监控子系统表 ---
     const probeQueries = [
         `CREATE TABLE IF NOT EXISTS probe_settings (key TEXT PRIMARY KEY, value TEXT)`,
         `CREATE TABLE IF NOT EXISTS probe_servers (
@@ -37,7 +35,6 @@ async function ensureDbSchema(db) {
     ];
     for (let query of probeQueries) { try { await db.prepare(query).run(); } catch (e) {} }
 
-    // 自动补充 KUI 历史字段
     try { await db.prepare("SELECT username FROM nodes LIMIT 1").first(); } catch (e) { try { await db.prepare("ALTER TABLE nodes ADD COLUMN username TEXT DEFAULT 'admin'").run(); } catch(e){} }
     try { await db.prepare("SELECT disk FROM servers LIMIT 1").first(); } catch (e) { const newCols = ['disk INTEGER DEFAULT 0', 'load TEXT DEFAULT ""', 'uptime TEXT DEFAULT ""', 'net_in_speed INTEGER DEFAULT 0', 'net_out_speed INTEGER DEFAULT 0', 'tcp_conn INTEGER DEFAULT 0', 'udp_conn INTEGER DEFAULT 0']; for (let col of newCols) { try { await db.prepare(`ALTER TABLE servers ADD COLUMN ${col}`).run(); } catch(err){} } }
     try { await db.prepare("SELECT sub_token FROM users LIMIT 1").first(); } catch (e) { try { await db.prepare("ALTER TABLE users ADD COLUMN sub_token TEXT").run(); } catch(err){} }
@@ -73,7 +70,7 @@ async function handleProbeAPI(request, env, context, pathArray) {
     const db = env.DB;
 
     if (method === 'GET' && subPath === 'public') {
-        const settings = { theme: 'theme1', is_public: 'true', site_title: '⚡ Server Monitor Pro', show_price: 'true', show_expire: 'true', show_bw: 'true', show_tf: 'true', custom_css: '', custom_bg: '', custom_head: '', custom_script: '' };
+        const settings = { theme: 'theme1', is_public: 'true', site_title: '⚡ Server Monitor Pro', show_price: 'true', show_expire: 'true', show_bw: 'true', show_tf: 'true', custom_css: '', custom_bg: '', custom_head: '', custom_script: '', report_interval: '5' };
         try { const { results } = await db.prepare('SELECT * FROM probe_settings').all(); if (results) results.forEach(r => settings[r.key] = r.value); } catch(e){}
         
         const isAjax = url.searchParams.get('ajax') === '1';
@@ -120,8 +117,7 @@ async function handleProbeAPI(request, env, context, pathArray) {
         await db.prepare(`UPDATE probe_servers SET name=?, server_group=?, price=?, expire_date=?, bandwidth=?, traffic_limit=?, agent_os=?, is_hidden=? WHERE id=?`).bind(data.name || 'Unnamed', data.server_group || '默认分组', data.price || '', data.expire_date || '', data.bandwidth || '', data.traffic_limit || '', data.agent_os || 'debian', data.is_hidden || 'false', data.id).run();
         return Response.json({ success: true });
     }
-    
-    // 我们不再允许在探针后台单独增加或删除机器，一切由 KUI 管理
+
     return Response.json({error: "Not Found"}, {status: 404});
 }
 
@@ -226,7 +222,12 @@ export async function onRequest(context) {
         if (stmts.length > 0) await db.batch(stmts);
         
         let fastMode = false; try { const uiActive = await db.prepare("SELECT ts FROM sys_config WHERE key = 'ui_active'").first(); if (uiActive && (nowMs - uiActive.ts < 20000)) fastMode = true; } catch(e) {}
-        return Response.json({ success: true, fast_mode: fastMode });
+        
+        // 🌟 将系统设置中的上报频率动态下发给 Agent
+        let reportInterval = 5;
+        try { const r = await db.prepare("SELECT value FROM probe_settings WHERE key = 'report_interval'").first(); if (r && r.value) reportInterval = parseInt(r.value); } catch(e) {}
+        
+        return Response.json({ success: true, fast_mode: fastMode, interval: reportInterval });
     }
 
     if (action === "config" && method === "GET") {
