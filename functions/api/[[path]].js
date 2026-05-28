@@ -117,6 +117,13 @@ async function handleProbeAPI(request, env, context, pathArray) {
         await db.prepare(`UPDATE probe_servers SET name=?, server_group=?, price=?, expire_date=?, bandwidth=?, traffic_limit=?, agent_os=?, is_hidden=? WHERE id=?`).bind(data.name || 'Unnamed', data.server_group || '默认分组', data.price || '', data.expire_date || '', data.bandwidth || '', data.traffic_limit || '', data.agent_os || 'debian', data.is_hidden || 'false', data.id).run();
         return Response.json({ success: true });
     }
+    
+    // 🌟 恢复删除探针库记录接口，用于清理已经删除的 KUI 面板中的僵尸记录
+    if (method === 'DELETE' && subPath === 'admin/server') {
+        const id = url.searchParams.get('id');
+        await db.prepare('DELETE FROM probe_servers WHERE id = ?').bind(id).run();
+        return Response.json({ success: true });
+    }
 
     return Response.json({error: "Not Found"}, {status: 404});
 }
@@ -148,6 +155,14 @@ export async function onRequest(context) {
         const nowMs = Date.now();
         const vpsIp = data.ip;
 
+        // 🌟 防僵尸复活锁：判断此机器是否已在 KUI 面板被删除
+        const kuiServer = await db.prepare('SELECT name FROM servers WHERE ip = ?').bind(vpsIp).first();
+        if (!kuiServer) {
+            // 如果已经被删除，直接抛弃数据并返回 403，不再往 probe_servers 里插入孤儿记录
+            return Response.json({ error: "Server has been removed from KUI panel." }, { status: 403 });
+        }
+        const serverName = kuiServer.name;
+
         // 1. 更新 KUI 核心节点数据库
         try { 
             await db.prepare("UPDATE servers SET cpu=?, mem=?, disk=?, load=?, uptime=?, net_in_speed=?, net_out_speed=?, tcp_conn=?, udp_conn=?, last_report=?, alert_sent=0 WHERE ip=?")
@@ -160,8 +175,6 @@ export async function onRequest(context) {
 
         // 2. 桥接同步到 CF 探针大盘数据库
         try {
-            const kuiServer = await db.prepare('SELECT name FROM servers WHERE ip = ?').bind(vpsIp).first();
-            const serverName = kuiServer ? kuiServer.name : vpsIp;
             let countryCode = request.cf && request.cf.country ? request.cf.country : 'XX'; 
             if (countryCode.toUpperCase() === 'TW') countryCode = 'CN';
 
@@ -223,13 +236,13 @@ export async function onRequest(context) {
         
         let fastMode = false; try { const uiActive = await db.prepare("SELECT ts FROM sys_config WHERE key = 'ui_active'").first(); if (uiActive && (nowMs - uiActive.ts < 20000)) fastMode = true; } catch(e) {}
         
-        // 🌟 将系统设置中的上报频率动态下发给 Agent
         let reportInterval = 5;
         try { const r = await db.prepare("SELECT value FROM probe_settings WHERE key = 'report_interval'").first(); if (r && r.value) reportInterval = parseInt(r.value); } catch(e) {}
         
         return Response.json({ success: true, fast_mode: fastMode, interval: reportInterval });
     }
 
+    // 后续的 GET/PUT 等原有路由完全不变
     if (action === "config" && method === "GET") {
         if (!(await verifyAuth(request.headers.get("Authorization"), db, env))) return new Response("Unauthorized", { status: 401 });
         const ip = new URL(request.url).searchParams.get("ip"); const now = Date.now(); const adminUser = env.ADMIN_USERNAME || "admin";
@@ -304,7 +317,11 @@ export async function onRequest(context) {
         
         if (action === "vps" && isAdmin) {
             if (method === "POST") { const { ip, name } = await request.json(); await db.prepare("INSERT OR IGNORE INTO servers (ip, name, alert_sent) VALUES (?, ?, 0)").bind(ip, name).run(); return Response.json({ success: true }); }
-            if (method === "DELETE") { const ip = new URL(request.url).searchParams.get("ip"); await db.batch([ db.prepare("DELETE FROM nodes WHERE vps_ip = ?").bind(ip), db.prepare("DELETE FROM traffic_stats WHERE ip = ?").bind(ip), db.prepare("DELETE FROM servers WHERE ip = ?").bind(ip), db.prepare("DELETE FROM probe_servers WHERE id = ?").bind(ip) ]); return Response.json({ success: true }); }
+            if (method === "DELETE") { 
+                const ip = new URL(request.url).searchParams.get("ip"); 
+                await db.batch([ db.prepare("DELETE FROM nodes WHERE vps_ip = ?").bind(ip), db.prepare("DELETE FROM traffic_stats WHERE ip = ?").bind(ip), db.prepare("DELETE FROM servers WHERE ip = ?").bind(ip), db.prepare("DELETE FROM probe_servers WHERE id = ?").bind(ip) ]); 
+                return Response.json({ success: true }); 
+            }
         }
 
         if (action === "nodes" && isAdmin) {
