@@ -328,8 +328,9 @@
                 </div>
                 <div class="flex flex-wrap justify-center lg:justify-end items-center gap-2 w-full lg:w-auto">
                     <span class="text-[10px] md:text-xs font-bold text-emerald-500 bg-emerald-100/50 px-3 py-2 rounded-full border border-emerald-200 animate-pulse">🟢 实时监控中</span>
-                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink(''), '全量聚合订阅已复制！')" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">🔗 复制订阅</button>
-                    <button v-if="role === 'admin'" @click="showQrCode(generateSubLink(''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">📱 二维码</button>
+                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', ''), '全量普通订阅已复制！')" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">🔗 普通订阅</button>
+                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', 'clash'), '全量Clash订阅已复制！')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">🔗 Clash订阅</button>
+                    <button v-if="role === 'admin'" @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">📱 二维码</button>
                     <button @click="refreshData" class="bg-white/50 hover:bg-white/80 border border-slate-200 px-4 py-2 rounded-full text-xs font-medium transition-all shadow-sm">🔄 刷新</button>
                     <button @click="logout" class="text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-full text-xs font-bold transition-all border border-transparent hover:border-rose-200">退出</button>
                 </div>
@@ -431,7 +432,7 @@
                             <div v-if="getNodesByIp(vps.ip).length === 0" class="text-center text-slate-400 text-xs py-6 border-2 border-dashed border-slate-200 rounded-2xl font-medium">节点矩阵为空，请在上方一键下发建立</div>
                         </div>
 
-                        <div class="p-4 md:p-6 bg-slate-100/50 border-t border-white grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div class="p-4 md:p-6 bg-slate-100/50 border-t border-white flex flex-col gap-3">
                             <div class="bg-slate-800 p-4 rounded-[1.25rem] group shadow-inner transition-colors">
                                 <div class="text-[10px] text-slate-400 font-bold uppercase mb-2 flex justify-between items-center">
                                     <span>Deploy Command</span>
@@ -442,7 +443,10 @@
                                 </div>
                                 <div class="text-emerald-400 font-mono text-xs truncate cursor-pointer hover:text-emerald-300 transition-colors" @click="copyCommand(generateCmd(vps.ip), '部署指令已复制！')">{{ generateCmd(vps.ip) }}</div>
                             </div>
-                            <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-4 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95" @click="copyCommand(generateSubLink(vps.ip), '单机节点订阅已复制！')">复制该机专属订阅</div>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, ''), '单机节点普通订阅已复制！')">复制该机普通订阅</div>
+                                <div class="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, 'clash'), '单机节点Clash订阅已复制！')">复制该机Clash订阅</div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -477,8 +481,9 @@
                         <div class="flex justify-between mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium"><span>账户状态: <span :class="users[0]?.enable === 1 ? 'text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded' : 'text-rose-500 font-bold bg-rose-50 px-2 py-1 rounded'">{{ users[0]?.enable === 1 ? '🟢 正常运行' : '🔴 已被封禁' }}</span></span><span>到期时间: <span class="font-bold text-slate-700">{{ formatDate(users[0]?.expire_time) }}</span></span></div>
                     </div>
                     <div class="flex flex-col md:flex-row justify-center gap-4 relative z-10">
-                        <button @click="copyCommand(generateSubLink(''), '聚合链接已复制！')" class="bg-gradient-to-r from-slate-800 to-black text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">🔗 一键复制专属订阅</button>
-                        <button @click="showQrCode(generateSubLink(''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">📱 显示二维码</button>
+                        <button @click="copyCommand(generateSubLink('', ''), '普通订阅链接已复制！')" class="bg-gradient-to-r from-slate-800 to-black text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">🔗 复制普通订阅</button>
+                        <button @click="copyCommand(generateSubLink('', 'clash'), 'Clash订阅链接已复制！')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">🔗 复制Clash订阅</button>
+                        <button @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">📱 显示二维码</button>
                     </div>
                 </div>
                 <div>
@@ -611,7 +616,7 @@
             <div class="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-sm relative text-center">
                 <button @click="qrModalOpen = false" class="absolute top-4 right-5 text-2xl text-slate-400 hover:text-slate-600">&times;</button>
                 <h3 class="text-xl font-black text-slate-800 mb-2">订阅二维码</h3>
-                <p class="text-xs text-slate-500 mb-6">请使用 v2rayN、Shadowrocket 等客户端扫描</p>
+                <p class="text-xs text-slate-500 mb-6">请使用客户端扫描 (暂仅支持普通订阅解析)</p>
                 <div class="flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <img :src="qrCodeImage" alt="QR Code" class="w-48 h-48 object-contain rounded-xl">
                 </div>
@@ -900,16 +905,18 @@
                 const saveSiteTitle = async () => { if(!siteTitleInput.value) return alert('名称不能为空！'); await fetchApi('/api/settings', { method: 'POST', body: JSON.stringify({ site_title: siteTitleInput.value }) }); siteTitle.value = siteTitleInput.value; alert('✅ KUI 聚合面板名称保存成功！'); };
                 const updateUserPassword = async () => { if(!userNewPassword.value) return alert('请输入新密码'); await fetchApi('/api/user/password', { method: 'PUT', body: JSON.stringify({ password: userNewPassword.value }) }); alert('✅ 密码修改成功！请使用新密码重新登录。'); logout(); };
                 const resetMySubLink = async () => { if(confirm('🚨 危险操作！重置后系统将为您签发全新的 UUID 订阅令牌，原链接将【立即作废】！确定要继续重置吗？')) { await fetchApi('/api/user/sub_token', { method: 'PUT' }); alert('✅ 订阅令牌已刷新！'); refreshData(); } };
-                const generateSubLink = (ip='') => { const tokenToUse = mySubToken.value || authKey.value; return `${currentDomain}/api/sub?user=${currentUser.value}&token=${tokenToUse}${ip?`&ip=${ip}`:''}`; };
+                
+                // 【核心修改点】：增加 format 参数生成不同订阅类型链接
+                const generateSubLink = (ip='', format='') => { const tokenToUse = mySubToken.value || authKey.value; return `${currentDomain}/api/sub?user=${currentUser.value}&token=${tokenToUse}${ip?`&ip=${ip}`:''}${format?`&format=${format}`:''}`; };
+                
                 const copyCommand = (txt, msg) => navigator.clipboard.writeText(txt).then(() => alert(msg));
 
-                // 🌟 显示二维码方法 (重构为同步生成，解决 Promise 失败与超长文本报错)
                 const showQrCode = (text) => {
                     try {
                         const qr = new QRious({
                             value: text,
                             size: 300,
-                            level: 'L', // 容错率调低，允许承载更长的订阅链接
+                            level: 'L', 
                             background: '#ffffff',
                             foreground: '#1e293b'
                         });
@@ -921,7 +928,6 @@
                     }
                 };
 
-                // --- 探针后台管理交互 ---
                 const saveProbeSettings = async () => { await fetchApi('/api/probe/admin/settings', { method: 'POST', body: JSON.stringify({settings: probeSys}) }); alert('✅ 探针大盘配置已生效！'); refreshData(); fetchProbeData(); };
                 const openProbeEditModal = (s) => { editingProbeNode.value = JSON.parse(JSON.stringify(s)); if(!editingProbeNode.value.is_hidden) editingProbeNode.value.is_hidden = 'false'; probeEditModalOpen.value = true; };
                 const saveProbeEdit = async () => { await fetchApi('/api/probe/admin/server', { method: 'PUT', body: JSON.stringify(editingProbeNode.value) }); probeEditModalOpen.value = false; refreshData(); fetchProbeData(); };
