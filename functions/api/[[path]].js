@@ -365,7 +365,14 @@ export async function onRequest(context) {
         const query = `SELECT n.* FROM nodes n LEFT JOIN users u ON n.username = u.username WHERE n.vps_ip = ? AND n.enable = 1 AND (n.traffic_limit = 0 OR n.traffic_used < n.traffic_limit) AND (n.expire_time = 0 OR n.expire_time > ?) AND (n.username = ? OR n.username = 'admin' OR (u.username IS NOT NULL AND u.enable = 1 AND (u.traffic_limit = 0 OR u.traffic_used < u.traffic_limit) AND (u.expire_time = 0 OR u.expire_time > ?)))`;
         const { results: machineNodes } = await db.prepare(query).bind(ip, now, adminUser, now).all();
         for (let node of machineNodes) { if (node.protocol === "dokodemo-door" && node.relay_type === "internal") { const targetNode = await db.prepare("SELECT * FROM nodes WHERE id = ?").bind(node.target_id).first(); if (targetNode) node.chain_target = { ip: targetNode.vps_ip, port: targetNode.port, protocol: targetNode.protocol, uuid: targetNode.uuid, sni: targetNode.sni, public_key: targetNode.public_key, short_id: targetNode.short_id }; } }
-        return Response.json({ success: true, configs: machineNodes });
+        let proxyCfg = { global: {}, toggle: { enable: false } };
+        try {
+            const r = await db.prepare("SELECT value FROM probe_settings WHERE key='proxy_config'").first();
+            if (r && r.value) { try { proxyCfg.global = JSON.parse(r.value); } catch (ex) {} }
+            const t = await db.prepare("SELECT value FROM probe_settings WHERE key='proxy_toggle_' || ?").bind(ip).first();
+            if (t && t.value) { try { proxyCfg.toggle = JSON.parse(t.value); } catch (ex) {} }
+        } catch (ex) {}
+        return Response.json({ success: true, configs: machineNodes, proxy: proxyCfg });
     }
 
     // 🌟 核心拦截并拆分普通订阅与 Clash 订阅生成
