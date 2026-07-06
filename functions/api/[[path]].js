@@ -30,8 +30,9 @@ async function ensureDbSchema(db) {
             expire_date TEXT DEFAULT '', bandwidth TEXT DEFAULT '', traffic_limit TEXT DEFAULT '', agent_os TEXT DEFAULT 'debian',
             ping_ct TEXT DEFAULT '0', ping_cu TEXT DEFAULT '0', ping_cm TEXT DEFAULT '0', ping_bd TEXT DEFAULT '0',
             monthly_rx TEXT DEFAULT '0', monthly_tx TEXT DEFAULT '0', last_rx TEXT DEFAULT '0', last_tx TEXT DEFAULT '0', 
-            reset_month TEXT DEFAULT '', history TEXT DEFAULT '{}', is_hidden TEXT DEFAULT 'false', virt TEXT DEFAULT '', reset_day TEXT DEFAULT '1'
-        )`
+            reset_month TEXT DEFAULT '', history TEXT DEFAULT '{}', is_hidden TEXT DEFAULT 'false', virt TEXT DEFAULT '',             reset_day TEXT DEFAULT '1'
+        )`,
+        `CREATE TABLE IF NOT EXISTS proxy_servers (ip TEXT PRIMARY KEY, socks_ip TEXT, port INTEGER, user TEXT, pass TEXT, country TEXT DEFAULT '', enabled INTEGER DEFAULT 1, last_seen INTEGER)`
     ];
     for (let query of probeQueries) { try { await db.prepare(query).run(); } catch (e) {} }
 
@@ -375,6 +376,29 @@ export async function onRequest(context) {
         return Response.json({ success: true, configs: machineNodes, proxy: proxyCfg });
     }
 
+    // 🌟 住宅IP代理池：列出所有已上报的 VPS SOCKS5 出口（含在线状态）
+    if (action === "pool" && method === "GET") {
+        if (!(await verifyAuth(request.headers.get("Authorization"), db, env))) return new Response("Unauthorized", { status: 401 });
+        const { results } = await db.prepare("SELECT ip, socks_ip, port, user, pass, country, enabled, last_seen FROM proxy_servers").all();
+        const now = Date.now();
+        const list = (results || []).map(r => ({ ...r, online: (now - (r.last_seen || 0)) < 120000 }));
+        return Response.json(list);
+    }
+
+    // 🌟 住宅IP跨VPS互联（mesh）：返回可供本机链式转发的对端 SOCKS5 出口（排除自身、仅在线）
+    if (action === "mesh" && method === "GET") {
+        if (!(await verifyAuth(request.headers.get("Authorization"), db, env))) return new Response("Unauthorized", { status: 401 });
+        const urlObj = new URL(request.url);
+        const myIp = urlObj.searchParams.get("ip") || "";
+        const country = (urlObj.searchParams.get("country") || "").toUpperCase();
+        const now = Date.now();
+        let q = "SELECT ip, socks_ip, port, user, pass, country FROM proxy_servers WHERE enabled = 1 AND ip != ? AND last_seen > ?";
+        const params = [myIp, now - 120000];
+        if (country && country !== "ANY") { q += " AND UPPER(country) = ?"; params.push(country); }
+        const { results } = await db.prepare(q).bind(...params).all();
+        return Response.json(results || []);
+    }
+
     // 🌟 核心拦截并拆分普通订阅与 Clash 订阅生成
     if (action === "sub" && method === "GET") {
         const urlObj = new URL(request.url); 
@@ -546,9 +570,19 @@ rules:
             const body = await request.json();
             
             if (subPath === "config") {
-                // 保存代理配置到 probe_settings
-                const configStr = JSON.stringify(body);
-                await db.prepare("INSERT INTO probe_settings (key, value) VALUES ('proxy_config', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(configStr).run();
+                // 保存代理配置：指定 VPS 时写入 per-IP toggle（含 mesh / 指定出口），否则写入全局默认
+                const { ip, enabled, port, country, mesh } = body;
+                if (ip) {
+                    let rec = { ip, enable: enabled !== false };
+                    try { const t = await db.prepare("SELECT value FROM probe_settings WHERE key='proxy_toggle_' || ?").bind(ip).first(); if (t && t.value) { const parsed = JSON.parse(t.value); rec = { ...parsed, ...rec }; } } catch (e) {}
+                    rec.mesh = mesh || null;
+                    await db.prepare("INSERT INTO probe_settings (key, value) VALUES ('proxy_toggle_' || ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(ip, JSON.stringify(rec)).run();
+                } else {
+                    let globalCfg = {};
+                    try { const g = await db.prepare("SELECT value FROM probe_settings WHERE key='proxy_config'").first(); if (g && g.value) globalCfg = JSON.parse(g.value); } catch (e) {}
+                    globalCfg.mesh = mesh || null;
+                    await db.prepare("INSERT INTO probe_settings (key, value) VALUES ('proxy_config', ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(JSON.stringify(globalCfg)).run();
+                }
                 return Response.json({ success: true });
             }
             
@@ -565,7 +599,17 @@ rules:
                 await db.prepare("INSERT INTO probe_settings (key, value) VALUES ('proxy_toggle_' || ?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value").bind(body.ip, proxyState).run();
                 return Response.json({ success: true });
             }
-            
+
+            if (subPath === "report") {
+                // Agent 心跳上报本机 SOCKS5 出口，汇入共享代理池
+                const { ip, socks_ip, port, user, pass, country, enabled, last_seen } = body;
+                if (!ip) return Response.json({ error: "ip required" }, { status: 400 });
+                await db.prepare(`INSERT INTO proxy_servers (ip, socks_ip, port, user, pass, country, enabled, last_seen) VALUES (?,?,?,?,?,?,?,?)
+                    ON CONFLICT(ip) DO UPDATE SET socks_ip=excluded.socks_ip, port=excluded.port, user=excluded.user, pass=excluded.pass, country=excluded.country, enabled=excluded.enabled, last_seen=excluded.last_seen`)
+                    .bind(ip, socks_ip || ip, parseInt(port) || 7920, user || "proxy", pass || "888888", (country || "").toUpperCase(), enabled ? 1 : 0, last_seen || Date.now()).run();
+                return Response.json({ success: true });
+            }
+
             return Response.json({ error: "Not Found" }, { status: 404 });
         }
         
