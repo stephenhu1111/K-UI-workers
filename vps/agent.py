@@ -35,6 +35,9 @@ prev_cpu_total = prev_cpu_idle = 0
 prev_rx = prev_tx = 0
 loop_counter = 0
 
+# 🌟 住宅IP代理配置缓存
+current_proxy_config = {}
+
 # 🌟 动态心跳间隔，默认 5 秒
 global_interval = 5
 
@@ -318,7 +321,7 @@ def process_argo_nodes(configs):
             del argo_tunnels[port]
     return argo_urls
 
-def build_singbox_config(nodes):
+def build_singbox_config(nodes, proxy_cfg=None):
     singbox_config = {
         "log": {"level": "warn"},
         "inbounds": [],
@@ -368,6 +371,25 @@ def build_singbox_config(nodes):
             else:
                 singbox_config["outbounds"].append({ "type": "direct", "tag": out_tag, "override_address": node["target_ip"], "override_port": int(node["target_port"]) })
             singbox_config["route"]["rules"].append({ "inbound": [in_tag], "outbound": out_tag })
+
+    # --- 住宅IP代理出口 / SOCKS5 服务注入 ---
+    if proxy_cfg:
+        toggle = proxy_cfg.get("toggle", {})
+        if toggle.get("enable") and toggle.get("ip") == VPS_IP:
+            try:
+                global_cfg = proxy_cfg.get("global", {})
+                proxy_port = int(global_cfg.get("port", 7920))
+                singbox_config["inbounds"].append({
+                    "type": "socks",
+                    "tag": "residential-socks5",
+                    "listen": "::",
+                    "listen_port": proxy_port,
+                    "users": [
+                        {"username": "proxy", "password": "888888"}
+                    ]
+                })
+            except Exception:
+                pass
 
     try:
         for filename in os.listdir("/opt/kui/"):
@@ -419,9 +441,12 @@ def fetch_and_apply_configs():
         data = json.loads(res.read().decode('utf-8'))
         if data.get("success"):
             nodes = data.get("configs", [])
-            build_singbox_config(nodes)
+            global current_proxy_config
+            current_proxy_config = data.get("proxy", {})
+            build_singbox_config(nodes, current_proxy_config)
             return nodes
-    except Exception: pass
+    except Exception:
+        pass
     return None
 
 if __name__ == "__main__":
