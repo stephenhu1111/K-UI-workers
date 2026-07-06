@@ -29,6 +29,14 @@ VPS_IP = env["ip"]
 TOKEN = env["token"]
 
 HEADERS = {'Content-Type': 'application/json', 'Authorization': TOKEN, 'User-Agent': 'KUI-Unified-Agent/2.0'}
+
+# 🌟 住宅IP代理：凭证与端口统一取自环境变量（与 Pages 端 PROXY_USER/PROXY_PASS/PROXY_PORT 保持一致）
+PROXY_USER = os.environ.get("PROXY_USER", "proxy")
+PROXY_PASS = os.environ.get("PROXY_PASS", "888888")
+PROXY_PORT = int(os.environ.get("PROXY_PORT", "7920"))
+BASE_URL = API_URL.rsplit('/api/', 1)[0] if '/api/' in API_URL else API_URL
+PROXY_API = BASE_URL  # 代理池后端接口统一挂在 /api/proxy/* 下
+
 last_reported_bytes = {}
 argo_tunnels = {}
 prev_cpu_total = prev_cpu_idle = 0
@@ -321,7 +329,7 @@ def process_argo_nodes(configs):
             del argo_tunnels[port]
     return argo_urls
 
-def build_singbox_config(nodes, proxy_cfg=None):
+def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None):
     singbox_config = {
         "log": {"level": "warn"},
         "inbounds": [],
@@ -372,20 +380,25 @@ def build_singbox_config(nodes, proxy_cfg=None):
                 singbox_config["outbounds"].append({ "type": "direct", "tag": out_tag, "override_address": node["target_ip"], "override_port": int(node["target_port"]) })
             singbox_config["route"]["rules"].append({ "inbound": [in_tag], "outbound": out_tag })
 
-    # --- 住宅IP代理出口 / SOCKS5 服务注入 ---
+    # --- 住宅IP代理出口 / SOCKS5 服务注入（每台 VPS 默认开启，凭证统一取自环境变量）---
     if proxy_cfg:
-        toggle = proxy_cfg.get("toggle", {})
-        if toggle.get("enable") and toggle.get("ip") == VPS_IP:
+        if isinstance(proxy_cfg, dict):
+            proxy_enabled = proxy_cfg.get("enabled", True)
+            proxy_port = int(proxy_cfg.get("port", PROXY_PORT))
+            proxy_user = proxy_cfg.get("user", PROXY_USER)
+            proxy_pass = proxy_cfg.get("pass", PROXY_PASS)
+        else:
+            proxy_enabled = bool(proxy_cfg)
+            proxy_port, proxy_user, proxy_pass = PROXY_PORT, PROXY_USER, PROXY_PASS
+        if proxy_enabled:
             try:
-                global_cfg = proxy_cfg.get("global", {})
-                proxy_port = int(global_cfg.get("port", 7920))
                 singbox_config["inbounds"].append({
                     "type": "socks",
                     "tag": "residential-socks5",
                     "listen": "::",
-                    "listen_port": proxy_port,
+                    "listen_port": int(proxy_port),
                     "users": [
-                        {"username": "proxy", "password": "888888"}
+                        {"username": str(proxy_user), "password": str(proxy_pass)}
                     ]
                 })
             except Exception:
@@ -396,6 +409,37 @@ def build_singbox_config(nodes, proxy_cfg=None):
             if (filename.startswith("cert_") or filename.startswith("key_")) and filename.endswith(".pem"):
                 if filename not in active_certs: os.remove(os.path.join("/opt/kui/", filename))
     except Exception: pass
+
+    # --- 住宅IP跨VPS互联（mesh）：把本机节点出口链式转发到其它 VPS 的 SOCKS5，实现出口IP共享/轮换 ---
+    if peers and mesh and mesh.get("enabled"):
+        try:
+            chain_mode = mesh.get("mode", "all")
+            chain_nodes = set(str(x) for x in (mesh.get("nodes") or []))
+            rr = [0]
+            for node in nodes:
+                if node.get("protocol") == "dokodemo-door":
+                    continue
+                nid = str(node["id"])
+                if chain_mode == "select" and nid not in chain_nodes:
+                    continue
+                if not peers:
+                    break
+                peer = peers[rr[0] % len(peers)]
+                rr[0] += 1
+                out_tag = f"mesh-out-{nid}"
+                srv = peer.get("socks_ip") or peer.get("ip") or ""
+                singbox_config["outbounds"].append({
+                    "type": "socks",
+                    "tag": out_tag,
+                    "server": srv,
+                    "server_port": int(peer.get("port") or PROXY_PORT),
+                    "username": str(peer.get("user") or PROXY_USER),
+                    "password": str(peer.get("pass") or PROXY_PASS)
+                })
+                in_tag = f"in-{nid}"
+                singbox_config["route"]["rules"].append({"inbound": [in_tag], "outbound": out_tag})
+        except Exception:
+            pass
 
     new_config_str = json.dumps(singbox_config, indent=2)
     old_config_str = ""
@@ -435,6 +479,81 @@ def report_status(current_nodes, argo_urls):
             global_interval = max(1, int(resp_data["interval"]))
     except Exception as e: pass
 
+def register_self():
+    try:
+        base_url = API_URL.rsplit('/', 1)[0]
+        vps_api = f"{base_url}/vps"
+        data = json.dumps({"ip": VPS_IP, "name": f"VPS-{VPS_IP}"}).encode()
+        req = urllib.request.Request(vps_api, data=data, headers={**HEADERS, 'Content-Type': 'application/json'})
+        urllib.request.urlopen(req, timeout=5)
+    except Exception:
+        pass
+
+def fetch_proxy_config():
+    try:
+        req = urllib.request.Request(f"{PROXY_API}/api/proxy/config?ip={VPS_IP}", headers=HEADERS)
+        res = urllib.request.urlopen(req, timeout=10)
+        return json.loads(res.read().decode('utf-8'))
+    except Exception:
+        return None
+
+def _extract_mesh(proxy_cfg):
+    # 解析 mesh 配置：优先 per-VPS toggle.mesh，其次全局 global.mesh，再退回扁平 mesh
+    if not isinstance(proxy_cfg, dict):
+        return {}
+    toggle = proxy_cfg.get("toggle")
+    if isinstance(toggle, dict) and isinstance(toggle.get("mesh"), dict):
+        return toggle["mesh"]
+    g = proxy_cfg.get("global")
+    if isinstance(g, dict) and isinstance(g.get("mesh"), dict):
+        return g["mesh"]
+    m = proxy_cfg.get("mesh")
+    if isinstance(m, dict):
+        return m
+    return {}
+
+def fetch_proxy_mesh(country="ANY"):
+    # 拉取可供本机链式转发的对端 SOCKS5 出口（mesh 互联）
+    try:
+        url = f"{PROXY_API}/api/proxy/mesh?ip={VPS_IP}"
+        c = (country or "ANY").upper()
+        if c and c != "ANY":
+            url += f"&country={c}"
+        req = urllib.request.Request(url, headers=HEADERS)
+        data = json.loads(urllib.request.urlopen(req, timeout=10).read().decode('utf-8'))
+        return data if isinstance(data, list) else []
+    except Exception:
+        return []
+
+def report_proxy_status():
+    try:
+        pc = current_proxy_config
+        def _g(key, default):
+            if isinstance(pc, dict):
+                if key in pc: return pc[key]
+                g = pc.get("global")
+                if isinstance(g, dict) and key in g: return g[key]
+            return default
+        enabled = _g("enabled", True)
+        port = int(_g("port", PROXY_PORT))
+        user = _g("user", PROXY_USER)
+        pwd = _g("pass", PROXY_PASS)
+        country = _g("country", "")
+        payload = {
+            "ip": VPS_IP,
+            "socks_ip": VPS_IP,
+            "port": int(port),
+            "user": str(user),
+            "pass": str(pwd),
+            "country": str(country),
+            "enabled": bool(enabled),
+            "last_seen": int(time.time())
+        }
+        req = urllib.request.Request(f"{PROXY_API}/api/proxy/report", data=json.dumps(payload).encode(), headers=HEADERS)
+        urllib.request.urlopen(req, timeout=10)
+    except Exception:
+        pass
+
 def fetch_and_apply_configs():
     try:
         res = urllib.request.urlopen(urllib.request.Request(f"{API_URL}?ip={VPS_IP}", headers=HEADERS), timeout=10)
@@ -442,8 +561,16 @@ def fetch_and_apply_configs():
         if data.get("success"):
             nodes = data.get("configs", [])
             global current_proxy_config
-            current_proxy_config = data.get("proxy", {})
-            build_singbox_config(nodes, current_proxy_config)
+            pc = fetch_proxy_config()
+            current_proxy_config = pc if pc is not None else data.get("proxy", {})
+            mesh = _extract_mesh(current_proxy_config)
+            peers = []
+            if mesh.get("enabled"):
+                peers = fetch_proxy_mesh(mesh.get("country", "ANY"))
+                exit_ip = mesh.get("exit")
+                if exit_ip and exit_ip != "ANY":
+                    peers = [p for p in peers if p.get("ip") == exit_ip]
+            build_singbox_config(nodes, current_proxy_config, peers, mesh)
             return nodes
     except Exception:
         pass
@@ -452,9 +579,11 @@ def fetch_and_apply_configs():
 if __name__ == "__main__":
     current_active_nodes = []
     time.sleep(2)
+    register_self()
     while True:
         fetched_nodes = fetch_and_apply_configs()
         if fetched_nodes is not None: current_active_nodes = fetched_nodes
         argo_urls = process_argo_nodes(current_active_nodes)
         report_status(current_active_nodes, argo_urls)
+        report_proxy_status()
         time.sleep(global_interval)
