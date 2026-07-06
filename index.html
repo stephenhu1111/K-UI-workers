@@ -22,7 +22,7 @@
         ::-webkit-scrollbar-thumb:hover { background: rgba(107, 114, 128, 0.8); }
         input:focus, select:focus, textarea:focus { outline: none; box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.4); }
 
-        /* ================= 探针前台大盘核心样式 ================= */
+        /* ================= 鎺㈤拡鍓嶅彴澶х洏鏍稿績鏍峰紡 ================= */
         .probe-body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background-color: transparent; color: #333; margin: 0; padding: 20px; transition: all 0.3s; min-height: 100vh;}
         body:not(.theme6) .probe-body { background-color: #f4f5f7; }
         
@@ -53,6 +53,13 @@
         .probe-stat-bar-full > div { height: 100%; border-radius: 3px; transition: width 0.3s; }
         .probe-stat-subtext { font-size: 11px; color: #6b7280; margin-top: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
+        .probe-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; margin-bottom: 10px; }
+        .probe-card-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12px; }
+        .probe-card-row-label { flex: 0 0 36px; color: #6b7280; font-weight: 600; }
+        .probe-stat-bar { flex: 1; height: 6px; background: #e5e7eb; border-radius: 3px; overflow: hidden; min-width: 0; }
+        .probe-stat-bar > div { height: 100%; border-radius: 3px; transition: width 0.3s; }
+        .probe-card-badge { padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; background: #e5e7eb; color: #374151; }
+
         /* Table View */
         .probe-custom-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 13px; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
         .probe-custom-table th { background: #f8fafc; padding: 14px 16px; color: #64748b; font-weight: 600; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
@@ -80,7 +87,7 @@
         .probe-chart-full { grid-column: 1 / -1; }
         .probe-chart-full canvas { max-height: 250px !important; }
 
-        /* 主题支持 */
+        /* 涓婚鏀寔 */
         .theme2 { background-color: #0d1117; color: #c9d1d9; }
         .theme2 .probe-vps-card, .theme2 .probe-global-stats, .theme2 .probe-header-card, .theme2 .probe-chart-card { background: #161b22; color: #c9d1d9; box-shadow: 0 4px 6px rgba(0,0,0,0.4); border: 1px solid #30363d; }
         .theme2 .probe-vps-card:hover { border-color: #8b949e; }
@@ -140,36 +147,36 @@
             <div v-if="showLoginModal" class="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center">
                 <div class="bg-white/80 backdrop-blur-xl border border-white p-10 rounded-[2.5rem] shadow-2xl w-full max-w-sm relative">
                     <button @click="showLoginModal = false" class="absolute top-4 right-5 text-2xl text-slate-400 hover:text-slate-600">&times;</button>
-                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-6 shadow-lg flex items-center justify-center"><span class="text-white text-3xl">✨</span></div>
-                    <h2 class="text-3xl font-black mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">系统准入</h2>
-                    <input v-model="loginUser" placeholder="用户名 (默认 admin)" class="w-full bg-white/50 border border-white p-4 rounded-2xl mb-4 focus:bg-white transition-all text-slate-700">
-                    <input v-model="password" type="password" placeholder="请输入密码" @keyup.enter="login" class="w-full bg-white/50 border border-white p-4 rounded-2xl mb-8 focus:bg-white transition-all text-slate-700">
-                    <button @click="login" class="w-full bg-gradient-to-r from-slate-800 to-black text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all">登 入 系统</button>
+                    <div class="w-16 h-16 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl mx-auto mb-6 shadow-lg flex items-center justify-center"><span class="text-white text-3xl">鉁?/span></div>
+                    <h2 class="text-3xl font-black mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-slate-800 to-slate-600">绯荤粺鍑嗗叆</h2>
+                    <input v-model="loginUser" placeholder="鐢ㄦ埛鍚?(榛樿 admin)" class="w-full bg-white/50 border border-white p-4 rounded-2xl mb-4 focus:bg-white transition-all text-slate-700">
+                    <input v-model="password" type="password" placeholder="璇疯緭鍏ュ瘑鐮? @keyup.enter="login" class="w-full bg-white/50 border border-white p-4 rounded-2xl mb-8 focus:bg-white transition-all text-slate-700">
+                    <button @click="login" class="w-full bg-gradient-to-r from-slate-800 to-black text-white p-4 rounded-2xl font-bold shadow-lg hover:scale-[1.02] active:scale-95 transition-all">鐧?鍏?绯荤粺</button>
                 </div>
             </div>
 
             <div v-if="showWelcomePopup && probeSys.enable_popup === 'true'" class="fixed inset-0 z-[9999] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4">
                 <div class="bg-white rounded-[2rem] p-8 shadow-2xl w-full max-w-lg relative text-center">
                     <div class="text-left leading-relaxed text-[15px] max-h-[60vh] overflow-y-auto text-slate-700" v-html="probeSys.popup_content"></div>
-                    <button @click="closePopup" class="mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">我已知晓</button>
+                    <button @click="closePopup" class="mt-6 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:scale-105 active:scale-95 transition-all">鎴戝凡鐭ユ檽</button>
                 </div>
             </div>
 
             <div class="probe-container">
                 <div class="flex justify-between items-center mb-8 flex-wrap gap-4 header">
                     <h1 class="text-2xl font-black m-0 flex items-center gap-3">
-                        <span v-if="probeDetailId" @click="probeDetailId = null" class="cursor-pointer text-blue-500 hover:underline text-sm font-medium">⬅ 返回</span>
+                        <span v-if="probeDetailId" @click="probeDetailId = null" class="cursor-pointer text-blue-500 hover:underline text-sm font-medium">猬?杩斿洖</span>
                         {{ probeSys.site_title || 'Server Monitor Pro' }}
                     </h1>
                     
                     <div class="flex items-center gap-4 flex-wrap" v-if="!probeDetailId">
                         <div class="probe-view-controls view-controls">
-                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'card'}" @click="setProbeView('card')">卡片</button>
-                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'table'}" @click="setProbeView('table')">表格</button>
-                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'map'}" @click="setProbeView('map')">地图</button>
+                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'card'}" @click="setProbeView('card')">鍗＄墖</button>
+                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'table'}" @click="setProbeView('table')">琛ㄦ牸</button>
+                            <button class="probe-toggle-btn toggle-btn" :class="{active: probeView === 'map'}" @click="setProbeView('map')">鍦板浘</button>
                         </div>
-                        <button v-if="!isLoggedIn" @click="showLoginModal = true" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg font-bold text-sm shadow-md hover:opacity-90 cursor-pointer">👨‍💻 KUI 管理面板</button>
-                        <button v-else @click="activeTab = (role === 'admin' ? 'nodes' : 'dashboard')" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-bold text-sm shadow-md hover:opacity-90 cursor-pointer">返回 KUI 面板</button>
+                        <button v-if="!isLoggedIn" @click="showLoginModal = true" class="px-4 py-2 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-lg font-bold text-sm shadow-md hover:opacity-90 cursor-pointer">馃懆鈥嶐煉?KUI 绠＄悊闈㈡澘</button>
+                        <button v-else @click="activeTab = (role === 'admin' ? 'nodes' : 'dashboard')" class="px-4 py-2 bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-lg font-bold text-sm shadow-md hover:opacity-90 cursor-pointer">杩斿洖 KUI 闈㈡澘</button>
                     </div>
                 </div>
 
@@ -179,33 +186,33 @@
                             <h2 class="text-2xl font-black m-0 mr-3 flex items-center card-title-text">
                                 <img v-if="probeDetail.country && probeDetail.country !== 'XX'" :src="'https://flagcdn.com/24x18/' + probeDetail.country.toLowerCase() + '.png'" class="mr-2 rounded-sm">{{ probeDetail.name }}
                             </h2>
-                            <span class="px-2.5 py-1 rounded-full text-xs font-bold text-white" :style="{background: isOnline(probeDetail.last_updated) ? '#10b981' : '#ef4444'}">{{ isOnline(probeDetail.last_updated) ? '在线' : '离线' }}</span>
+                            <span class="px-2.5 py-1 rounded-full text-xs font-bold text-white" :style="{background: isOnline(probeDetail.last_updated) ? '#10b981' : '#ef4444'}">{{ isOnline(probeDetail.last_updated) ? '鍦ㄧ嚎' : '绂荤嚎' }}</span>
                         </div>
                         <div class="probe-info-grid info-grid">
-                            <div class="flex flex-col"><span class="probe-info-label info-label">运行时间</span><span class="font-medium info-value">{{ probeDetail.uptime || 'N/A' }}</span></div>
-                            <div class="flex flex-col"><span class="probe-info-label info-label">架构</span><span class="font-medium info-value">{{ probeDetail.arch || 'N/A' }}</span></div>
-                            <div class="flex flex-col"><span class="probe-info-label info-label">系统</span><span class="font-medium info-value">{{ probeDetail.os || 'N/A' }}</span></div>
-                            <div class="flex flex-col"><span class="probe-info-label info-label">虚拟化</span><span class="font-medium info-value">{{ probeDetail.virt || 'N/A' }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">杩愯鏃堕棿</span><span class="font-medium info-value">{{ probeDetail.uptime || 'N/A' }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">鏋舵瀯</span><span class="font-medium info-value">{{ probeDetail.arch || 'N/A' }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">绯荤粺</span><span class="font-medium info-value">{{ probeDetail.os || 'N/A' }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">铏氭嫙鍖?/span><span class="font-medium info-value">{{ probeDetail.virt || 'N/A' }}</span></div>
                             <div class="flex flex-col"><span class="probe-info-label info-label">CPU</span><span class="font-medium truncate info-value" :title="probeDetail.cpu_info">{{ probeDetail.cpu_info || 'N/A' }}</span></div>
                             <div class="flex flex-col"><span class="probe-info-label info-label">Load</span><span class="font-medium info-value">{{ probeDetail.load_avg || '0.00' }}</span></div>
-                            <div class="flex flex-col"><span class="probe-info-label info-label">上传 / 下载</span><span class="font-medium info-value">{{ formatBytes(probeDetail.net_tx) }} / {{ formatBytes(probeDetail.net_rx) }}</span></div>
-                            <div class="flex flex-col"><span class="probe-info-label info-label">启动时间</span><span class="font-medium info-value">{{ probeDetail.boot_time || 'N/A' }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">涓婁紶 / 涓嬭浇</span><span class="font-medium info-value">{{ formatBytes(probeDetail.net_tx) }} / {{ formatBytes(probeDetail.net_rx) }}</span></div>
+                            <div class="flex flex-col"><span class="probe-info-label info-label">鍚姩鏃堕棿</span><span class="font-medium info-value">{{ probeDetail.boot_time || 'N/A' }}</span></div>
                         </div>
                     </div>
                     
                     <div class="probe-charts-grid charts-grid">
                         <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">CPU <span class="stat-val">{{ probeDetail.cpu || 0 }}%</span></h3><canvas id="probeChartCPU"></canvas></div>
-                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">内存 <span class="stat-val">{{ probeDetail.ram || 0 }}%</span></h3><div class="text-xs text-gray-500 mb-1">Swap: {{ probeDetail.swap_used }} / {{ probeDetail.swap_total }} MiB</div><canvas id="probeChartRAM"></canvas></div>
+                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">鍐呭瓨 <span class="stat-val">{{ probeDetail.ram || 0 }}%</span></h3><div class="text-xs text-gray-500 mb-1">Swap: {{ probeDetail.swap_used }} / {{ probeDetail.swap_total }} MiB</div><canvas id="probeChartRAM"></canvas></div>
                         <div class="probe-chart-card chart-card">
-                            <h3 class="mt-0 text-base flex justify-between">磁盘 <span class="stat-val">{{ probeDetail.disk || 0 }}%</span></h3>
+                            <h3 class="mt-0 text-base flex justify-between">纾佺洏 <span class="stat-val">{{ probeDetail.disk || 0 }}%</span></h3>
                             <div class="w-full h-5 bg-gray-200 rounded-full overflow-hidden mt-10"><div id="disk-bar" class="h-full transition-all duration-500" :style="{width: (probeDetail.disk || 0) + '%', background: '#34d399'}"></div></div>
                             <p class="text-right text-xs text-gray-500 mt-2">{{ (probeDetail.disk_used/1024).toFixed(2) }} GiB / {{ (probeDetail.disk_total/1024).toFixed(2) }} GiB</p>
                         </div>
-                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">进程数 <span class="stat-val">{{ probeDetail.processes || 0 }}</span></h3><canvas id="probeChartProc"></canvas></div>
-                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">网络速度 <span class="text-sm speed-val"><span class="text-emerald-500">↓</span> {{ formatBytes(probeDetail.net_in_speed) }}/s | <span class="text-blue-500">↑</span> {{ formatBytes(probeDetail.net_out_speed) }}/s</span></h3><canvas id="probeChartNet"></canvas></div>
+                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">杩涚▼鏁?<span class="stat-val">{{ probeDetail.processes || 0 }}</span></h3><canvas id="probeChartProc"></canvas></div>
+                        <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">缃戠粶閫熷害 <span class="text-sm speed-val"><span class="text-emerald-500">鈫?/span> {{ formatBytes(probeDetail.net_in_speed) }}/s | <span class="text-blue-500">鈫?/span> {{ formatBytes(probeDetail.net_out_speed) }}/s</span></h3><canvas id="probeChartNet"></canvas></div>
                         <div class="probe-chart-card chart-card"><h3 class="mt-0 text-base flex justify-between">TCP / UDP <span class="text-sm speed-val">TCP {{ probeDetail.tcp_conn || 0 }} | UDP {{ probeDetail.udp_conn || 0 }}</span></h3><canvas id="probeChartConn"></canvas></div>
                         <div class="probe-chart-card probe-chart-full chart-card chart-full">
-                            <h3 class="mt-0 text-base flex justify-between">国内延迟追踪 (24小时) <span class="text-xs font-normal speed-val">电信 <b>{{ probeDetail.ping_ct || 0 }}ms</b> | 联通 <b>{{ probeDetail.ping_cu || 0 }}ms</b> | 移动 <b>{{ probeDetail.ping_cm || 0 }}ms</b> | 字节 <b>{{ probeDetail.ping_bd || 0 }}ms</b></span></h3>
+                            <h3 class="mt-0 text-base flex justify-between">鍥藉唴寤惰繜杩借釜 (24灏忔椂) <span class="text-xs font-normal speed-val">鐢典俊 <b>{{ probeDetail.ping_ct || 0 }}ms</b> | 鑱旈€?<b>{{ probeDetail.ping_cu || 0 }}ms</b> | 绉诲姩 <b>{{ probeDetail.ping_cm || 0 }}ms</b> | 瀛楄妭 <b>{{ probeDetail.ping_bd || 0 }}ms</b></span></h3>
                             <canvas id="probeChartPing"></canvas>
                         </div>
                     </div>
@@ -213,106 +220,83 @@
 
                 <div v-else>
                     <div class="probe-filter-bar filter-bar">
-                        <span class="probe-filter-tag filter-tag" :class="{active: currentFilter === 'all'}" @click="currentFilter = 'all'">全部 {{ publicProbeServers.length }}</span>
+                        <span class="probe-filter-tag filter-tag" :class="{active: currentFilter === 'all'}" @click="currentFilter = 'all'">鍏ㄩ儴 {{ publicProbeServers.length }}</span>
                         <span v-for="(count, code) in probeCountryStats" :key="code" class="probe-filter-tag filter-tag" :class="{active: currentFilter === code}" @click="currentFilter = code">
                             <img :src="'https://flagcdn.com/16x12/' + (code === 'TW' ? 'cn' : code.toLowerCase()) + '.png'"> {{ code }} {{ count }}
                         </span>
                     </div>
 
                     <div class="probe-global-stats global-stats">
-                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">服务器总数</div><div class="probe-g-val g-val">{{ publicProbeServers.length }}</div><div class="probe-g-sub g-sub">在线 <span class="text-emerald-500">{{ probeGlobalOnline }}</span> | 离线 <span class="text-red-500">{{ probeGlobalOffline }}</span></div></div>
-                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">总计流量 (入 | 出) <span v-if="probeSys.auto_reset_traffic==='true'" class="text-[10px] text-orange-600">(按期重置)</span></div><div class="probe-g-val g-val">{{ formatBytes(probeGlobalNetRx) }} | {{ formatBytes(probeGlobalNetTx) }}</div></div>
-                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">实时网速 (入 | 出)</div><div class="probe-g-val g-val"><span class="text-emerald-500">↓</span> {{ formatBytes(probeGlobalSpeedIn) }}/s | <span class="text-blue-500">↑</span> {{ formatBytes(probeGlobalSpeedOut) }}/s</div></div>
+                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">鏈嶅姟鍣ㄦ€绘暟</div><div class="probe-g-val g-val">{{ publicProbeServers.length }}</div><div class="probe-g-sub g-sub">鍦ㄧ嚎 <span class="text-emerald-500">{{ probeGlobalOnline }}</span> | 绂荤嚎 <span class="text-red-500">{{ probeGlobalOffline }}</span></div></div>
+                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">鎬昏娴侀噺 (鍏?| 鍑? <span v-if="probeSys.auto_reset_traffic==='true'" class="text-[10px] text-orange-600">(鎸夋湡閲嶇疆)</span></div><div class="probe-g-val g-val">{{ formatBytes(probeGlobalNetRx) }} | {{ formatBytes(probeGlobalNetTx) }}</div></div>
+                        <div class="probe-g-item g-item"><div class="probe-g-label g-label">瀹炴椂缃戦€?(鍏?| 鍑?</div><div class="probe-g-val g-val"><span class="text-emerald-500">鈫?/span> {{ formatBytes(probeGlobalSpeedIn) }}/s | <span class="text-blue-500">鈫?/span> {{ formatBytes(probeGlobalSpeedOut) }}/s</div></div>
                     </div>
 
                     <div v-if="probeView === 'card'">
-                         <template v-if="Object.keys(filteredProbeGroups).length === 0"><p class="text-center text-gray-500 w-full mt-10">暂无匹配的服务器</p><p class="text-center text-gray-400 text-sm mt-2">部署 KUI Agent 后，探针将自动在此处上报数据</p></template>
-                        <template v-for="(servers, groupName) in filteredProbeGroups" :key="groupName">
-                            <div class="probe-group-header group-header">{{ groupName }}</div>
-                            <div class="probe-grid-container grid-container">
-                                <div v-for="s in servers" :key="s.id" @click="openProbeDetail(s.id)" class="probe-vps-card vps-card">
-                                    <div class="probe-card-left card-left">
-                                        <div class="probe-card-title card-title">
-                                            <div class="probe-status-dot status-dot" :style="{background: isOnline(s.last_updated) ? '#10b981' : '#ef4444'}"></div>
-                                            <img v-if="s.country && s.country !== 'XX'" :src="'https://flagcdn.com/24x18/' + (s.country === 'TW' ? 'cn' : s.country.toLowerCase()) + '.png'" class="mr-1.5 rounded-sm">
-                                            <span class="text-[15px] truncate card-title-text">{{ s.name }}</span>
+                        <div class="probe-grid-container">
+                            <div v-for="s in filteredProbeServers" :key="s.id" @click="openProbeDetail(s.id)" class="probe-vps-card">
+                                <div class="probe-card-left">
+                                    <div class="probe-card-title">
+                                        <span class="probe-status-dot" :style="{background: isOnline(s.last_updated) ? '#10b981' : '#ef4444'}"></span>
+                                        <span class="card-title-text">{{ s.name }}</span>
+                                    </div>
+                                    <div class="probe-card-meta">{{ s.ip || '' }}</div>
+                                    <div class="probe-card-meta">{{ s.os || '-' }} / {{ s.arch || '-' }} / {{ s.virt || '-' }}</div>
+                                    <div class="probe-card-badges">
+                                        <span v-if="s.bandwidth" class="probe-badge probe-badge-bw">{{ s.bandwidth }}</span>
+                                        <span v-if="s.price" class="probe-badge probe-badge-tf">{{ s.price }}</span>
+                                    </div>
+                                    <div class="probe-ping-box" v-if="s.ping_ct || s.ping_cu || s.ping_cm || s.ping_bd">
+                                        <span v-if="s.ping_ct">电信 {{ s.ping_ct }}ms</span>
+                                        <span v-if="s.ping_cu">联通 {{ s.ping_cu }}ms</span>
+                                        <span v-if="s.ping_cm">移动 {{ s.ping_cm }}ms</span>
+                                        <span v-if="s.ping_bd">百度 {{ s.ping_bd }}ms</span>
+                                    </div>
+                                </div>
+                                <div class="probe-card-right">
+                                    <div class="probe-stat-group">
+                                        <div class="probe-stat-header">
+                                            <span>CPU</span>
+                                            <span class="stat-val">{{ parseFloat(s.cpu||0).toFixed(1) }}%</span>
                                         </div>
-                                        <div v-if="probeSys.show_price === 'true'" class="probe-card-meta card-meta mt-2">价格: {{ s.price || '免费' }}</div>
-                                        <div v-if="probeSys.show_expire === 'true'" class="probe-card-meta card-meta" :class="probeSys.show_price!=='true'?'mt-2':''">剩余天数: {{ getExpireText(s.expire_date) }}</div>
-                                        <div class="probe-card-meta card-meta" :class="probeSys.show_price!=='true'&&probeSys.show_expire!=='true'?'mt-2':''">流量: <span class="text-emerald-500">↓</span> {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_rx' : 'net_rx']) }} | <span class="text-blue-500">↑</span> {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_tx' : 'net_tx']) }}</div>
-                                        <div class="probe-card-meta card-meta mt-0.5">在线: {{ (s.uptime||'-').replace('days','天').replace('day','天') }} | 更新: {{ Math.round((Date.now() - s.last_updated)/1000) }}s前</div>
-                                        
-                                        <div class="probe-card-badges card-badges">
-                                            <span v-if="probeSys.show_bw === 'true' && s.bandwidth" class="probe-badge badge probe-badge-bw badge-bw">{{ s.bandwidth }}</span>
-                                            <span v-if="probeSys.show_tf === 'true' && s.traffic_limit" class="probe-badge badge probe-badge-tf badge-tf">{{ s.traffic_limit }}</span>
-                                            <span v-if="s.ip_v4 === '1'" class="probe-badge badge probe-badge-v4 badge-v4">IPv4</span>
-                                            <span v-if="s.ip_v6 === '1'" class="probe-badge badge probe-badge-v6 badge-v6">IPv6</span>
-                                        </div>
-                                        <div class="probe-ping-box ping-box">
-                                            <span>电信 <span class="font-bold" :style="{color: getPingColor(s.ping_ct)}">{{ s.ping_ct === '0' ? '超时' : s.ping_ct + 'ms' }}</span></span>
-                                            <span>联通 <span class="font-bold" :style="{color: getPingColor(s.ping_cu)}">{{ s.ping_cu === '0' ? '超时' : s.ping_cu + 'ms' }}</span></span>
-                                            <span>移动 <span class="font-bold" :style="{color: getPingColor(s.ping_cm)}">{{ s.ping_cm === '0' ? '超时' : s.ping_cm + 'ms' }}</span></span>
-                                            <span>字节 <span class="font-bold" :style="{color: getPingColor(s.ping_bd)}">{{ s.ping_bd === '0' ? '超时' : s.ping_bd + 'ms' }}</span></span>
+                                        <div class="probe-stat-bar-full">
+                                            <div class="bg-blue-500" :style="{width: (s.cpu||0)+'%'}"></div>
                                         </div>
                                     </div>
-                                    <div class="probe-card-right card-right">
-                                        <div class="probe-stat-group stat-group">
-                                            <div class="probe-stat-header stat-header"><span class="stat-label">CPU</span><span class="stat-val" :style="{color: s.cpu>80?'#ef4444':''}">{{ parseFloat(s.cpu||0).toFixed(1) }}%</span></div>
-                                            <div class="probe-stat-bar-full stat-bar-full"><div :style="{width: s.cpu+'%', background: s.cpu>80?'#ef4444':'#3b82f6'}"></div></div>
-                                            <div class="probe-stat-subtext stat-subtext" :title="s.cpu_info">{{ s.cpu_info || '-' }}</div>
+                                    <div class="probe-stat-group">
+                                        <div class="probe-stat-header">
+                                            <span>内存</span>
+                                            <span class="stat-val">{{ parseFloat(s.ram||0).toFixed(1) }}%</span>
                                         </div>
-                                        <div class="probe-stat-group stat-group">
-                                            <div class="probe-stat-header stat-header"><span class="stat-label">内存</span><span class="stat-val" :style="{color: s.ram>80?'#ef4444':''}">{{ parseFloat(s.ram||0).toFixed(1) }}%</span></div>
-                                            <div class="probe-stat-bar-full stat-bar-full"><div :style="{width: s.ram+'%', background: s.ram>80?'#ef4444':'#10b981'}"></div></div>
-                                            <div class="probe-stat-subtext stat-subtext">{{ formatBytes(s.ram_used*1048576) }} / {{ formatBytes(s.ram_total*1048576) }}</div>
+                                        <div class="probe-stat-bar-full">
+                                            <div class="bg-purple-500" :style="{width: (s.ram||0)+'%'}"></div>
                                         </div>
-                                        <div class="probe-stat-group stat-group">
-                                            <div class="probe-stat-header stat-header"><span class="stat-label">存储</span><span class="stat-val" :style="{color: s.disk>80?'#ef4444':''}">{{ parseFloat(s.disk||0).toFixed(1) }}%</span></div>
-                                            <div class="probe-stat-bar-full stat-bar-full"><div :style="{width: s.disk+'%', background: s.disk>80?'#ef4444':'#10b981'}"></div></div>
-                                            <div class="probe-stat-subtext stat-subtext">{{ formatBytes(s.disk_used*1048576) }} / {{ formatBytes(s.disk_total*1048576) }}</div>
+                                    </div>
+                                    <div class="probe-stat-group">
+                                        <div class="probe-stat-header">
+                                            <span>硬盘</span>
+                                            <span class="stat-val">{{ parseFloat(s.disk||0).toFixed(1) }}%</span>
                                         </div>
-                            <div class="flex justify-between text-[11px] text-gray-500 mt-0.5">
-                                <div class="truncate mr-1 stat-subtext" :title="s.os+' | '+s.arch+' | '+s.virt">{{ s.os || '-' }} | {{ s.arch || '-' }} | {{ s.virt || '-' }}</div>
-                                <div class="shrink-0 stat-subtext">TCP/UDP: {{ s.tcp_conn||0 }} / {{ s.udp_conn||0 }}</div>
-                            </div>
-                            <div class="flex justify-between text-[11px] text-gray-500 mt-1">
-                                <div class="stat-subtext"><span class="text-emerald-500">↓</span> {{ formatBytes(s.net_in_speed) }}/s</div>
-                                <div class="stat-subtext"><span class="text-blue-500">↑</span> {{ formatBytes(s.net_out_speed) }}/s</div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- SOCKS5 住宅IP 开关 -->
-                    <div class="px-6 md:px-8 pb-4">
-                        <div class="bg-gradient-to-r from-purple-50 to-indigo-50 p-4 rounded-2xl border border-purple-200 shadow-sm">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="flex items-center gap-2">
-                                    <span class="text-purple-600 text-lg">🌐</span>
-                                    <span class="text-sm font-bold text-purple-800">SOCKS5 住宅IP 出口</span>
+                                        <div class="probe-stat-bar-full">
+                                            <div class="bg-emerald-500" :style="{width: (s.disk||0)+'%'}"></div>
+                                        </div>
+                                    </div>
+                                    <div class="probe-stat-subtext">
+                                        流量: {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_rx' : 'net_rx']) }} | {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_tx' : 'net_tx']) }}
+                                        <span v-if="s.net_in_speed || s.net_out_speed" style="margin-left: 8px;">
+                                            下载 {{ formatBytes(s.net_in_speed) }}/s | 上传 {{ formatBytes(s.net_out_speed) }}/s
+                                        </span>
+                                    </div>
                                 </div>
-                                <label class="relative inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" :value="s.proxy_enabled" class="sr-only peer" @change="toggleNodeProxy(s.ip, s.proxy_enabled)">
-                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-                                </label>
-                            </div>
-                            <div class="text-xs text-purple-600/80 mb-2">
-                                <div>当前状态: <span :class="s.proxy_enabled ? 'text-green-600 font-bold' : 'text-gray-500'">已启用</span></div>
-                                <div>出口地址: <span class="font-mono text-xs">{{ s.proxy_enabled ? (s.proxy_ip || '192.168.1.1') : '局域网' }}</span></div>
-                            </div>
-                            <div class="text-xs text-gray-500">
-                                <div>协议: <span class="text-purple-600">socks5://{{ s.proxy_user || 'proxy' }}:{{ s.proxy_pass || '888888' }}@{{ s.proxy_enabled ? (s.proxy_ip || 'node-ip') : 'local' }}:{{ s.proxy_port || 7920 }}</span></div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                        </template>
                     </div>
 
                     <div v-if="probeView === 'table'" class="overflow-x-auto">
                         <table class="probe-custom-table custom-table">
-                            <thead><tr><th>状态</th><th>节点名称</th><th>地区</th><th>系统/架构/虚拟化</th><th>CPU</th><th>内存</th><th>磁盘</th><th>流量(入|出)</th><th>下行</th><th>上行</th><th>更新</th></tr></thead>
+                            <thead><tr><th>鐘舵€?/th><th>鑺傜偣鍚嶇О</th><th>鍦板尯</th><th>绯荤粺/鏋舵瀯/铏氭嫙鍖?/th><th>CPU</th><th>鍐呭瓨</th><th>纾佺洏</th><th>娴侀噺(鍏鍑?</th><th>涓嬭</th><th>涓婅</th><th>鏇存柊</th></tr></thead>
                             <tbody>
-                                <tr v-if="filteredProbeServers.length===0"><td colspan="11" class="text-center">暂无数据</td></tr>
+                                <tr v-if="filteredProbeServers.length===0"><td colspan="11" class="text-center">鏆傛棤鏁版嵁</td></tr>
                                 <tr v-for="s in filteredProbeServers" :key="s.id" @click="openProbeDetail(s.id)">
                                     <td class="text-center"><div class="probe-status-dot status-dot inline-block m-0" :style="{background: isOnline(s.last_updated) ? '#10b981' : '#ef4444'}"></div></td>
                                     <td><b class="card-title-text">{{ s.name }}</b></td>
@@ -324,10 +308,41 @@
                                     <td class="text-xs text-gray-500 card-meta">{{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_rx' : 'net_rx']) }} | {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_tx' : 'net_tx']) }}</td>
                                     <td class="stat-val">{{ formatBytes(s.net_in_speed) }}/s</td>
                                     <td class="stat-val">{{ formatBytes(s.net_out_speed) }}/s</td>
-                                    <td class="text-xs text-gray-500 card-meta">{{ Math.round((Date.now() - s.last_updated)/1000) }} 秒前</td>
+                                    <td class="text-xs text-gray-500 card-meta">{{ Math.round((Date.now() - s.last_updated)/1000) }} 绉掑墠</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
+
+                    <div v-show="probeView === 'card'">
+                        <template v-if="filteredProbeServers.length === 0">
+                            <div class="text-center py-10 card-meta">暂无数据</div>
+                        </template>
+                        <template v-for="(servers, groupName) in filteredProbeGroups" :key="groupName">
+                            <div class="probe-group-header">{{ groupName }} ({{ servers.length }})</div>
+                            <div class="probe-card-grid">
+                                <div v-for="s in servers" :key="s.id" class="probe-vps-card" @click="openProbeDetail(s.id)">
+                                    <div class="probe-card-left">
+                                        <div class="probe-card-title">
+                                            <span class="probe-status-dot status-dot" :style="{background: isOnline(s.last_updated) ? '#10b981' : '#ef4444'}"></span>
+                                            <img v-if="s.country && s.country!=='XX'" :src="'https://flagcdn.com/24x18/' + (s.country === 'TW' ? 'cn' : s.country.toLowerCase()) + '.png'" class="mr-2 rounded-sm">
+                                            <span class="card-title-text">{{ s.name }}</span>
+                                        </div>
+                                        <div class="probe-card-meta">{{ s.os||'-' }} / {{ s.arch||'-' }}</div>
+                                        <div class="probe-card-meta">更新于 {{ Math.round((Date.now() - s.last_updated)/1000) }} 秒前</div>
+                                        <div class="probe-card-badges">
+                                            <span class="probe-card-badge">{{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_rx' : 'net_rx']) }} | {{ formatBytes(s[probeSys.auto_reset_traffic === 'true' ? 'monthly_tx' : 'net_tx']) }}</span>
+                                        </div>
+                                    </div>
+                                    <div class="probe-card-right">
+                                        <div class="probe-card-row"><span class="probe-card-row-label">CPU</span><div class="probe-stat-bar stat-bar"><div class="h-full bg-blue-500" :style="{width: s.cpu+'%'}"></div></div><span class="stat-val">{{ parseFloat(s.cpu||0).toFixed(1) }}%</span></div>
+                                        <div class="probe-card-row"><span class="probe-card-row-label">内存</span><div class="probe-stat-bar stat-bar"><div class="h-full bg-emerald-500" :style="{width: s.ram+'%'}"></div></div><span class="stat-val">{{ parseFloat(s.ram||0).toFixed(1) }}%</span></div>
+                                        <div class="probe-card-row"><span class="probe-card-row-label">硬盘</span><div class="probe-stat-bar stat-bar"><div class="h-full bg-emerald-500" :style="{width: s.disk+'%'}"></div></div><span class="stat-val">{{ parseFloat(s.disk||0).toFixed(1) }}%</span></div>
+                                        <div class="probe-card-row"><span class="probe-card-row-label">流量</span><span class="stat-val">↓ {{ formatBytes(s.net_in_speed) }}/s | ↑ {{ formatBytes(s.net_out_speed) }}/s</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
 
                     <div v-show="probeView === 'map'">
@@ -337,7 +352,7 @@
                 </div>
                 
                 <div class="text-center mt-10 pb-5 text-sm opacity-80 card-meta">
-                    <div class="mb-2"><span class="mr-4">👁️ 历史总访问：<b class="text-blue-500 stat-val">{{ probeSys.visits_total || 0 }}</b> 次</span><span>🔥 今日访问：<b class="text-emerald-500 stat-val">{{ probeSys.visits_today || 0 }}</b> 次</span></div>
+                    <div class="mb-2"><span class="mr-4">馃憗锔?鍘嗗彶鎬昏闂細<b class="text-blue-500 stat-val">{{ probeSys.visits_total || 0 }}</b> 娆?/span><span>馃敟 浠婃棩璁块棶锛?b class="text-emerald-500 stat-val">{{ probeSys.visits_today || 0 }}</b> 娆?/span></div>
                     Powered by KUI Core x CF-Server-Monitor-Pro
                 </div>
             </div>
@@ -351,33 +366,33 @@
                         {{ siteTitle || 'Cluster Gateway' }}
                     </h1>
                     <div class="hidden md:block w-px h-6 bg-slate-300"></div>
-                    <a href="https://www.youtube.com/@%E7%A7%91%E6%8A%80KKK" target="_blank" class="bg-white/60 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-rose-600 transition-all shadow-sm">📺 Youtube频道</a>
-                    <a href="https://github.com/a62169722/KUI" target="_blank" class="bg-white/60 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 transition-all shadow-sm">🐙 Github仓库</a>
+                    <a href="https://www.youtube.com/@%E7%A7%91%E6%8A%80KKK" target="_blank" class="bg-white/60 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-rose-600 transition-all shadow-sm">馃摵 Youtube棰戦亾</a>
+                    <a href="https://github.com/a62169722/KUI" target="_blank" class="bg-white/60 hover:bg-white border border-slate-200 px-3 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-slate-900 transition-all shadow-sm">馃悪 Github浠撳簱</a>
                 </div>
                 <div class="flex flex-wrap justify-center lg:justify-end items-center gap-2 w-full lg:w-auto">
-                    <span class="text-[10px] md:text-xs font-bold text-emerald-500 bg-emerald-100/50 px-3 py-2 rounded-full border border-emerald-200 animate-pulse">🟢 实时监控中</span>
-                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', ''), '全量普通订阅已复制！')" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">🔗 普通订阅</button>
-                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', 'clash'), '全量Clash订阅已复制！')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">🔗 Clash订阅</button>
-                    <button v-if="role === 'admin'" @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">📱 二维码</button>
-                    <button @click="refreshData" class="bg-white/50 hover:bg-white/80 border border-slate-200 px-4 py-2 rounded-full text-xs font-medium transition-all shadow-sm">🔄 刷新</button>
-                    <button @click="logout" class="text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-full text-xs font-bold transition-all border border-transparent hover:border-rose-200">退出</button>
+                    <span class="text-[10px] md:text-xs font-bold text-emerald-500 bg-emerald-100/50 px-3 py-2 rounded-full border border-emerald-200 animate-pulse">馃煝 瀹炴椂鐩戞帶涓?/span>
+                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', ''), '鍏ㄩ噺鏅€氳闃呭凡澶嶅埗锛?)" class="bg-gradient-to-r from-indigo-500 to-purple-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">馃敆 鏅€氳闃?/button>
+                    <button v-if="role === 'admin'" @click="copyCommand(generateSubLink('', 'clash'), '鍏ㄩ噺Clash璁㈤槄宸插鍒讹紒')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">馃敆 Clash璁㈤槄</button>
+                    <button v-if="role === 'admin'" @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full text-xs font-bold shadow-md hover:scale-105 active:scale-95 transition-all">馃摫 浜岀淮鐮?/button>
+                    <button @click="refreshData" class="bg-white/50 hover:bg-white/80 border border-slate-200 px-4 py-2 rounded-full text-xs font-medium transition-all shadow-sm">馃攧 鍒锋柊</button>
+                    <button @click="logout" class="text-rose-500 hover:bg-rose-50 px-4 py-2 rounded-full text-xs font-bold transition-all border border-transparent hover:border-rose-200">閫€鍑?/button>
                 </div>
             </div>
 
             <div class="flex justify-center mb-4">
                 <div class="bg-slate-200/50 p-1.5 rounded-full flex flex-wrap justify-center gap-1 backdrop-blur-sm border border-white/50 shadow-inner">
                     <template v-if="role === 'admin'">
-                        <button @click="activeTab = 'nodes'" :class="activeTab === 'nodes' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">服务器与节点</button>
-                        <button @click="activeTab = 'users'" :class="activeTab === 'users' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">多用户管理</button>
-                        <button @click="activeTab = 'proxy'" :class="activeTab === 'proxy' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">🌐 住宅IP代理</button>
-                        <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">⚙️ 系统设置</button>
-                        <button @click="activeTab = 'probe'; probeDetailId = null;" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base text-emerald-600 hover:bg-emerald-50 shadow-sm border border-transparent hover:border-emerald-200">🌐 探针全景大盘</button>
+                        <button @click="activeTab = 'nodes'" :class="activeTab === 'nodes' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">鏈嶅姟鍣ㄤ笌鑺傜偣</button>
+                        <button @click="activeTab = 'users'" :class="activeTab === 'users' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">澶氱敤鎴风鐞?/button>
+                        <button @click="activeTab = 'proxy'" :class="activeTab === 'proxy' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">馃寪 浣忓畢IP浠ｇ悊</button>
+                        <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">鈿欙笍 绯荤粺璁剧疆</button>
+                        <button @click="activeTab = 'probe'; probeDetailId = null;" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base text-emerald-600 hover:bg-emerald-50 shadow-sm border border-transparent hover:border-emerald-200">馃寪 鎺㈤拡鍏ㄦ櫙澶х洏</button>
                     </template>
                     <template v-if="role === 'user'">
-                        <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">我的主页</button>
-                        <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">⚙️ 系统设置</button>
-                        <button @click="activeTab = 'proxy'" :class="activeTab === 'proxy' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">🌐 住宅IP代理</button>
-                        <button @click="activeTab = 'probe'; probeDetailId = null;" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base text-emerald-600 hover:bg-emerald-50 shadow-sm border border-transparent hover:border-emerald-200">🌐 探针全景大盘</button>
+                        <button @click="activeTab = 'dashboard'" :class="activeTab === 'dashboard' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">鎴戠殑涓婚〉</button>
+                        <button @click="activeTab = 'settings'" :class="activeTab === 'settings' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">鈿欙笍 绯荤粺璁剧疆</button>
+                        <button @click="activeTab = 'proxy'" :class="activeTab === 'proxy' ? 'bg-white text-purple-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base">馃寪 浣忓畢IP浠ｇ悊</button>
+                        <button @click="activeTab = 'probe'; probeDetailId = null;" class="px-6 md:px-8 py-2.5 rounded-full font-bold transition-all text-sm md:text-base text-emerald-600 hover:bg-emerald-50 shadow-sm border border-transparent hover:border-emerald-200">馃寪 鎺㈤拡鍏ㄦ櫙澶х洏</button>
                     </template>
                 </div>
             </div>
@@ -386,22 +401,22 @@
                 <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
                     <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">ONLINE SERVERS</div><div class="text-3xl font-black text-slate-700">{{ globalOnline }} / {{ servers.length }}</div></div>
                     <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">AGGREGATE TRAFFIC</div><div class="text-3xl font-black text-slate-700">{{ formatBytes(globalTraffic) }}</div></div>
-                    <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">DOWNLOAD</div><div class="text-2xl font-black text-emerald-500 truncate">↓ {{ formatBytes(globalSpeedIn) }}/s</div></div>
-                    <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">UPLOAD</div><div class="text-2xl font-black text-blue-500 truncate">↑ {{ formatBytes(globalSpeedOut) }}/s</div></div>
+                    <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">DOWNLOAD</div><div class="text-2xl font-black text-emerald-500 truncate">鈫?{{ formatBytes(globalSpeedIn) }}/s</div></div>
+                    <div class="bg-white/60 backdrop-blur-xl p-5 rounded-[2rem] border border-white shadow-lg shadow-indigo-100/30 text-center"><div class="text-[10px] text-slate-400 font-bold mb-1 tracking-widest">UPLOAD</div><div class="text-2xl font-black text-blue-500 truncate">鈫?{{ formatBytes(globalSpeedOut) }}/s</div></div>
                 </div>
 
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 flex flex-col md:flex-row gap-4 items-end">
-                    <div class="flex-1"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">服务器别名</label><input v-model="newVps.name" placeholder="例如: 日本软银 01" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
-                    <div class="flex-1"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">公网 IP</label><input v-model="newVps.ip" placeholder="8.8.8.8" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
-                    <div class="w-full md:w-48"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">系统架构</label><select v-model="newVps.os" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white outline-none font-medium text-slate-700"><option value="debian">Ubuntu / Debian</option><option value="alpine">Alpine Linux</option></select></div>
-                    <button @click="addVps" class="bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:scale-105 whitespace-nowrap">接入机器</button>
+                    <div class="flex-1"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鏈嶅姟鍣ㄥ埆鍚?/label><input v-model="newVps.name" placeholder="渚嬪: 鏃ユ湰杞摱 01" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
+                    <div class="flex-1"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鍏綉 IP</label><input v-model="newVps.ip" placeholder="8.8.8.8" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
+                    <div class="w-full md:w-48"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">绯荤粺鏋舵瀯</label><select v-model="newVps.os" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white outline-none font-medium text-slate-700"><option value="debian">Ubuntu / Debian</option><option value="alpine">Alpine Linux</option></select></div>
+                    <button @click="addVps" class="bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:scale-105 whitespace-nowrap">鎺ュ叆鏈哄櫒</button>
                 </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <div v-if="servers.length === 0" class="col-span-full text-center py-20">
-                        <div class="text-6xl mb-4">🖥️</div>
-                        <h3 class="text-xl font-black text-slate-700 mb-2">暂无接入的服务器</h3>
-                        <p class="text-slate-400 text-sm font-medium">请在上方表单填写服务器信息并点击“接入机器”添加您的第一台 VPS</p>
+                        <div class="text-6xl mb-4">馃枼锔?/div>
+                        <h3 class="text-xl font-black text-slate-700 mb-2">鏆傛棤鎺ュ叆鐨勬湇鍔″櫒</h3>
+                        <p class="text-slate-400 text-sm font-medium">璇峰湪涓婃柟琛ㄥ崟濉啓鏈嶅姟鍣ㄤ俊鎭苟鐐瑰嚮鈥滄帴鍏ユ満鍣ㄢ€濇坊鍔犳偍鐨勭涓€鍙?VPS</p>
                     </div>
                     <div v-for="vps in servers" :key="vps.ip" class="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 flex flex-col overflow-hidden transition-all hover:shadow-2xl">
                         <div class="p-6 md:p-8 relative">
@@ -410,14 +425,14 @@
                                     <h3 class="font-black text-2xl text-slate-800 flex items-center gap-2 mb-1">{{ vps.name }}<span :class="isOnline(vps.last_report) ? 'bg-emerald-400 shadow-[0_0_8px_rgba(52,211,153,0.8)]' : 'bg-rose-400 shadow-[0_0_8px_rgba(251,113,133,0.8)]'" class="w-3 h-3 rounded-full inline-block"></span></h3>
                                     <p class="text-sm font-mono text-slate-400 font-medium">{{ vps.ip }}</p>
                                 </div>
-                                <button @click="deleteVps(vps.ip)" class="text-slate-300 hover:text-rose-500 font-bold transition-all">彻底移除</button>
+                                <button @click="deleteVps(vps.ip)" class="text-slate-300 hover:text-rose-500 font-bold transition-all">褰诲簳绉婚櫎</button>
                             </div>
                             <div class="flex justify-between text-[10px] text-slate-400 font-mono font-black mb-4 px-1 uppercase tracking-wider"><span>UP: {{ vps.uptime || 'N/A' }}</span><span>LOAD: {{ vps.load || '0.00' }}</span></div>
                             <div class="grid grid-cols-4 gap-2 mb-6">
                                 <div class="bg-white/50 p-3 rounded-2xl border border-white shadow-sm flex flex-col justify-between"><div class="text-[9px] text-slate-400 font-bold tracking-wider mb-1">CPU</div><div class="font-black text-lg text-slate-700">{{ vps.cpu || 0 }}%</div><div class="w-full bg-slate-200/50 rounded-full h-1 mt-1 overflow-hidden"><div class="bg-indigo-400 h-1 rounded-full" :style="{ width: (vps.cpu || 0) + '%' }"></div></div></div>
                                 <div class="bg-white/50 p-3 rounded-2xl border border-white shadow-sm flex flex-col justify-between"><div class="text-[9px] text-slate-400 font-bold tracking-wider mb-1">MEM</div><div class="font-black text-lg text-slate-700">{{ vps.mem || 0 }}%</div><div class="w-full bg-slate-200/50 rounded-full h-1 mt-1 overflow-hidden"><div class="bg-purple-400 h-1 rounded-full" :style="{ width: (vps.mem || 0) + '%' }"></div></div></div>
                                 <div class="bg-white/50 p-3 rounded-2xl border border-white shadow-sm flex flex-col justify-between"><div class="text-[9px] text-slate-400 font-bold tracking-wider mb-1">DISK</div><div class="font-black text-lg text-slate-700">{{ vps.disk || 0 }}%</div><div class="w-full bg-slate-200/50 rounded-full h-1 mt-1 overflow-hidden"><div class="bg-emerald-400 h-1 rounded-full" :style="{ width: (vps.disk || 0) + '%' }"></div></div></div>
-                                <div class="bg-white/50 p-2 rounded-2xl border border-white shadow-sm flex flex-col justify-center text-center"><div class="text-[9px] text-slate-400 font-bold tracking-wider mb-1">SPEED</div><div class="text-[10px] font-black text-emerald-500 truncate">↓ {{ formatBytes(vps.net_in_speed || 0) }}/s</div><div class="text-[10px] font-black text-blue-500 truncate mt-0.5">↑ {{ formatBytes(vps.net_out_speed || 0) }}/s</div></div>
+                                <div class="bg-white/50 p-2 rounded-2xl border border-white shadow-sm flex flex-col justify-center text-center"><div class="text-[9px] text-slate-400 font-bold tracking-wider mb-1">SPEED</div><div class="text-[10px] font-black text-emerald-500 truncate">鈫?{{ formatBytes(vps.net_in_speed || 0) }}/s</div><div class="text-[10px] font-black text-blue-500 truncate mt-0.5">鈫?{{ formatBytes(vps.net_out_speed || 0) }}/s</div></div>
                             </div>
                             <div class="bg-white/40 p-4 rounded-2xl border border-white"><div class="text-[10px] text-slate-400 font-bold tracking-wider mb-2">7-DAY TRAFFIC TREND</div><div :id="'chart-' + vps.ip" class="w-full h-32"></div></div>
                         </div>
@@ -425,29 +440,29 @@
                         <div class="px-6 md:px-8 pb-4">
                             <div class="bg-indigo-50/70 border-2 border-dashed border-indigo-200 p-6 rounded-[1.5rem] mb-2 relative overflow-hidden group shadow-sm hover:border-indigo-300 transition-all">
                                 <div class="absolute top-0 right-0 bg-indigo-500 text-white text-[10px] font-black px-3 py-1 rounded-bl-xl shadow-sm">QUICK INSTALL</div>
-                                <h4 class="font-black text-indigo-800 text-lg mb-2 flex items-center gap-2">🚀 极速全量节点下发 (8合1)</h4>
-                                <p class="text-xs text-indigo-500/80 font-bold mb-5 leading-relaxed">输入起始端口，系统将依次为您生成 8 个稳定防封协议阵列：XTLS+Reality, Hysteria2, TUIC, Trojan, H2+Reality, gRPC+Reality, AnyTLS, Naive。</p>
+                                <h4 class="font-black text-indigo-800 text-lg mb-2 flex items-center gap-2">馃殌 鏋侀€熷叏閲忚妭鐐逛笅鍙?(8鍚?)</h4>
+                                <p class="text-xs text-indigo-500/80 font-bold mb-5 leading-relaxed">杈撳叆璧峰绔彛锛岀郴缁熷皢渚濇涓烘偍鐢熸垚 8 涓ǔ瀹氶槻灏佸崗璁樀鍒楋細XTLS+Reality, Hysteria2, TUIC, Trojan, H2+Reality, gRPC+Reality, AnyTLS, Naive銆?/p>
                                 <div class="flex flex-col md:flex-row gap-4 mb-2">
-                                    <div class="flex-1"><label class="block text-[10px] text-indigo-400 font-bold mb-1 pl-1">归属用户设置</label><select v-model="batchUser[vps.ip]" class="w-full bg-white border border-indigo-100 text-indigo-700 font-bold text-sm p-3.5 rounded-xl outline-none focus:shadow-md transition"><option value="admin">👤 管理员自身</option><option v-for="u in users" :value="u.username">👤 {{ u.username }}</option></select></div>
-                                    <div class="flex-1"><label class="block text-[10px] text-indigo-400 font-bold mb-1 pl-1">起始端口 (建议 8881)</label><input v-model="batchStartPort[vps.ip]" type="number" placeholder="例如: 8881" class="w-full bg-white border border-indigo-100 p-3.5 rounded-xl outline-none text-sm font-mono text-indigo-900 focus:shadow-md transition"></div>
-                                    <div class="flex items-end"><button @click="deployAllProtocols(vps.ip)" class="h-[50px] bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-8 rounded-xl text-sm font-black shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap">🚀 爆发下发</button></div>
+                                    <div class="flex-1"><label class="block text-[10px] text-indigo-400 font-bold mb-1 pl-1">褰掑睘鐢ㄦ埛璁剧疆</label><select v-model="batchUser[vps.ip]" class="w-full bg-white border border-indigo-100 text-indigo-700 font-bold text-sm p-3.5 rounded-xl outline-none focus:shadow-md transition"><option value="admin">馃懁 绠＄悊鍛樿嚜韬?/option><option v-for="u in users" :value="u.username">馃懁 {{ u.username }}</option></select></div>
+                                    <div class="flex-1"><label class="block text-[10px] text-indigo-400 font-bold mb-1 pl-1">璧峰绔彛 (寤鸿 8881)</label><input v-model="batchStartPort[vps.ip]" type="number" placeholder="渚嬪: 8881" class="w-full bg-white border border-indigo-100 p-3.5 rounded-xl outline-none text-sm font-mono text-indigo-900 focus:shadow-md transition"></div>
+                                    <div class="flex items-end"><button @click="deployAllProtocols(vps.ip)" class="h-[50px] bg-gradient-to-r from-indigo-500 to-blue-600 text-white px-8 rounded-xl text-sm font-black shadow-md hover:shadow-lg hover:-translate-y-0.5 active:translate-y-0 transition-all whitespace-nowrap">馃殌 鐖嗗彂涓嬪彂</button></div>
                                 </div>
                             </div>
 
                             <div class="bg-gradient-to-br from-white/80 to-white/40 p-5 rounded-[1.5rem] border border-white shadow-sm mt-4">
-                                <div class="text-xs font-bold text-slate-400 mb-2 pl-1">手动单节点精细化下发</div>
-                                <select v-model="newNodeParams[vps.ip].username" class="w-full border-none bg-indigo-50/50 text-indigo-700 font-bold text-sm p-3 rounded-xl outline-none mb-3"><option value="admin">👤 归属权: 管理员自身</option><option v-for="u in users" :value="u.username">👤 归属权: {{ u.username }}</option></select>
+                                <div class="text-xs font-bold text-slate-400 mb-2 pl-1">鎵嬪姩鍗曡妭鐐圭簿缁嗗寲涓嬪彂</div>
+                                <select v-model="newNodeParams[vps.ip].username" class="w-full border-none bg-indigo-50/50 text-indigo-700 font-bold text-sm p-3 rounded-xl outline-none mb-3"><option value="admin">馃懁 褰掑睘鏉? 绠＄悊鍛樿嚜韬?/option><option v-for="u in users" :value="u.username">馃懁 褰掑睘鏉? {{ u.username }}</option></select>
                                 <div class="flex gap-3 mb-3">
-                                    <select v-model="newNodeParams[vps.ip].protocol" class="border-none bg-slate-100/50 text-slate-700 text-sm p-3 rounded-xl flex-1 outline-none font-medium"><option value="XTLS-Reality">XTLS + Reality</option><option value="Hysteria2">Hysteria2 (极速)</option><option value="TUIC">TUIC v5 (高并发)</option><option value="Trojan">Trojan</option><option value="H2-Reality">H2 + Reality</option><option value="gRPC-Reality">gRPC + Reality</option><option value="AnyTLS">AnyTLS</option><option value="Naive">Naive</option><option disabled>──────────</option><option value="VLESS-Argo">VLESS Argo (全自动穿透)</option><option value="dokodemo-door">Dokodemo (内部转发)</option></select>
-                                    <input v-model="newNodeParams[vps.ip].port" type="number" placeholder="端口" class="bg-slate-100/50 text-slate-700 text-sm p-3 rounded-xl w-24 outline-none font-mono">
+                                    <select v-model="newNodeParams[vps.ip].protocol" class="border-none bg-slate-100/50 text-slate-700 text-sm p-3 rounded-xl flex-1 outline-none font-medium"><option value="XTLS-Reality">XTLS + Reality</option><option value="Hysteria2">Hysteria2 (鏋侀€?</option><option value="TUIC">TUIC v5 (楂樺苟鍙?</option><option value="Trojan">Trojan</option><option value="H2-Reality">H2 + Reality</option><option value="gRPC-Reality">gRPC + Reality</option><option value="AnyTLS">AnyTLS</option><option value="Naive">Naive</option><option disabled>鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€鈹€</option><option value="VLESS-Argo">VLESS Argo (鍏ㄨ嚜鍔ㄧ┛閫?</option><option value="dokodemo-door">Dokodemo (鍐呴儴杞彂)</option></select>
+                                    <input v-model="newNodeParams[vps.ip].port" type="number" placeholder="绔彛" class="bg-slate-100/50 text-slate-700 text-sm p-3 rounded-xl w-24 outline-none font-mono">
                                 </div>
                                 <div class="grid grid-cols-2 gap-3 mb-3">
-                                    <div class="bg-slate-100/50 p-3 rounded-xl"><label class="block text-[10px] text-slate-400 font-bold mb-1">配额(GB, 0无限)</label><input v-model="newNodeParams[vps.ip].traffic_limit_gb" type="number" class="w-full text-sm bg-transparent outline-none font-bold text-slate-700"></div>
-                                    <div class="bg-slate-100/50 p-3 rounded-xl"><label class="block text-[10px] text-slate-400 font-bold mb-1">到期日(留空永久)</label><input v-model="newNodeParams[vps.ip].expire_date" type="date" class="w-full text-sm bg-transparent outline-none font-bold text-slate-700"></div>
+                                    <div class="bg-slate-100/50 p-3 rounded-xl"><label class="block text-[10px] text-slate-400 font-bold mb-1">閰嶉(GB, 0鏃犻檺)</label><input v-model="newNodeParams[vps.ip].traffic_limit_gb" type="number" class="w-full text-sm bg-transparent outline-none font-bold text-slate-700"></div>
+                                    <div class="bg-slate-100/50 p-3 rounded-xl"><label class="block text-[10px] text-slate-400 font-bold mb-1">鍒版湡鏃?鐣欑┖姘镐箙)</label><input v-model="newNodeParams[vps.ip].expire_date" type="date" class="w-full text-sm bg-transparent outline-none font-bold text-slate-700"></div>
                                 </div>
-                                <div v-if="['XTLS-Reality', 'H2-Reality', 'gRPC-Reality'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" :list="'sni-rec-' + vps.ip" placeholder="伪装域名: 支持手填或下拉" class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"><datalist :id="'sni-rec-' + vps.ip"><option value="addons.mozilla.org"></option><option value="www.apple.com"></option><option value="gateway.icloud.com"></option><option value="itunes.apple.com"></option><option value="www.microsoft.com"></option></datalist></div>
-                                <div v-if="['TUIC', 'Hysteria2', 'Trojan', 'AnyTLS', 'Naive'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" placeholder="SNI 域名 / 主机名" class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"></div>
-                                <button @click="addNode(vps.ip)" class="w-full bg-gradient-to-r from-slate-800 to-black text-white py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02]">添加单节点</button>
+                                <div v-if="['XTLS-Reality', 'H2-Reality', 'gRPC-Reality'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" :list="'sni-rec-' + vps.ip" placeholder="浼鍩熷悕: 鏀寔鎵嬪～鎴栦笅鎷? class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"><datalist :id="'sni-rec-' + vps.ip"><option value="addons.mozilla.org"></option><option value="www.apple.com"></option><option value="gateway.icloud.com"></option><option value="itunes.apple.com"></option><option value="www.microsoft.com"></option></datalist></div>
+                                <div v-if="['TUIC', 'Hysteria2', 'Trojan', 'AnyTLS', 'Naive'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" placeholder="SNI 鍩熷悕 / 涓绘満鍚? class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"></div>
+                                <button @click="addNode(vps.ip)" class="w-full bg-gradient-to-r from-slate-800 to-black text-white py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02]">娣诲姞鍗曡妭鐐?/button>
                             </div>
                         </div>
 
@@ -455,16 +470,16 @@
                             <div v-for="node in getNodesByIp(vps.ip)" :key="node.id" class="bg-white/80 border border-white p-4 rounded-2xl mb-3 shadow-sm hover:shadow-md group transition-all">
                                 <div class="flex justify-between items-start mb-3">
                                     <div class="flex-1 overflow-hidden pr-2">
-                                        <div class="flex items-center gap-2 mb-1.5"><span class="font-black text-slate-700">{{ node.protocol }} <span class="font-mono text-slate-400 text-xs bg-slate-100 px-1.5 rounded">#{{ node.port }}</span></span><span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md font-bold">👤 {{ node.username }}</span><span v-if="node.enable === 0" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">已停用</span></div>
-                                        <div v-if="node.protocol === 'VLESS-Argo'" class="text-[11px] p-1.5 rounded-lg overflow-hidden text-ellipsis whitespace-nowrap max-w-full inline-block" :class="node.sni.includes('等待') ? 'bg-amber-50 text-amber-600 animate-pulse font-bold' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 font-mono font-bold'">Argo: {{ node.sni }}</div>
+                                        <div class="flex items-center gap-2 mb-1.5"><span class="font-black text-slate-700">{{ node.protocol }} <span class="font-mono text-slate-400 text-xs bg-slate-100 px-1.5 rounded">#{{ node.port }}</span></span><span class="text-[10px] bg-purple-50 text-purple-600 px-2 py-0.5 rounded-md font-bold">馃懁 {{ node.username }}</span><span v-if="node.enable === 0" class="text-[10px] bg-slate-100 text-slate-500 px-2 py-0.5 rounded-md font-bold">宸插仠鐢?/span></div>
+                                        <div v-if="node.protocol === 'VLESS-Argo'" class="text-[11px] p-1.5 rounded-lg overflow-hidden text-ellipsis whitespace-nowrap max-w-full inline-block" :class="node.sni.includes('绛夊緟') ? 'bg-amber-50 text-amber-600 animate-pulse font-bold' : 'bg-emerald-50 border border-emerald-100 text-emerald-700 font-mono font-bold'">Argo: {{ node.sni }}</div>
                                         <div v-else-if="node.sni" class="text-[11px] bg-slate-50 text-slate-500 p-1.5 rounded-lg overflow-hidden text-ellipsis font-mono inline-block">SNI: {{ node.sni }}</div>
                                     </div>
-                                    <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"><button @click="toggleNode(node.id, node.enable === 1 ? 0 : 1)" class="text-[11px] px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 font-bold text-slate-600 shadow-sm">{{ node.enable === 1 ? '停用' : '启用' }}</button><button @click="deleteNode(node.id)" class="text-rose-500 text-[11px] px-2 py-1 bg-white border border-rose-100 rounded-md hover:bg-rose-50 font-bold shadow-sm">删除</button></div>
+                                    <div class="flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity"><button @click="toggleNode(node.id, node.enable === 1 ? 0 : 1)" class="text-[11px] px-2 py-1 rounded-md bg-white border border-slate-200 hover:bg-slate-50 font-bold text-slate-600 shadow-sm">{{ node.enable === 1 ? '鍋滅敤' : '鍚敤' }}</button><button @click="deleteNode(node.id)" class="text-rose-500 text-[11px] px-2 py-1 bg-white border border-rose-100 rounded-md hover:bg-rose-50 font-bold shadow-sm">鍒犻櫎</button></div>
                                 </div>
                                 <div class="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden"><div :class="(node.traffic_limit > 0 && node.traffic_used >= node.traffic_limit) ? 'bg-rose-400' : 'bg-slate-800'" class="h-1.5 rounded-full transition-all duration-500" :style="{ width: getTrafficPercent(node.traffic_used, node.traffic_limit) + '%' }"></div></div>
-                                <div class="flex justify-between text-[10px] text-slate-400 mt-2 font-medium"><span>已用: {{ formatBytes(node.traffic_used) }} <span v-if="node.traffic_limit > 0">/ {{ formatBytes(node.traffic_limit) }}</span></span><div class="flex gap-3"><span v-if="node.expire_time > 0">到期: {{ formatDate(node.expire_time) }}</span><button v-if="node.traffic_used > 0" @click="resetTraffic(node.id)" class="text-indigo-500 hover:underline font-bold">清零</button></div></div>
+                                <div class="flex justify-between text-[10px] text-slate-400 mt-2 font-medium"><span>宸茬敤: {{ formatBytes(node.traffic_used) }} <span v-if="node.traffic_limit > 0">/ {{ formatBytes(node.traffic_limit) }}</span></span><div class="flex gap-3"><span v-if="node.expire_time > 0">鍒版湡: {{ formatDate(node.expire_time) }}</span><button v-if="node.traffic_used > 0" @click="resetTraffic(node.id)" class="text-indigo-500 hover:underline font-bold">娓呴浂</button></div></div>
                             </div>
-                            <div v-if="getNodesByIp(vps.ip).length === 0" class="text-center text-slate-400 text-xs py-6 border-2 border-dashed border-slate-200 rounded-2xl font-medium">节点矩阵为空，请在上方一键下发建立</div>
+                            <div v-if="getNodesByIp(vps.ip).length === 0" class="text-center text-slate-400 text-xs py-6 border-2 border-dashed border-slate-200 rounded-2xl font-medium">鑺傜偣鐭╅樀涓虹┖锛岃鍦ㄤ笂鏂逛竴閿笅鍙戝缓绔?/div>
                         </div>
 
                         <div class="p-4 md:p-6 bg-slate-100/50 border-t border-white flex flex-col gap-3">
@@ -476,11 +491,11 @@
                                         <label class="cursor-pointer hover:text-white flex items-center gap-1"><input type="radio" v-model="deployOsMap[vps.ip]" @change="saveOsMap" value="alpine" class="accent-indigo-500"> Alpine</label>
                                     </div>
                                 </div>
-                                <div class="text-emerald-400 font-mono text-xs truncate cursor-pointer hover:text-emerald-300 transition-colors" @click="copyCommand(generateCmd(vps.ip), '部署指令已复制！')">{{ generateCmd(vps.ip) }}</div>
+                                <div class="text-emerald-400 font-mono text-xs truncate cursor-pointer hover:text-emerald-300 transition-colors" @click="copyCommand(generateCmd(vps.ip), '閮ㄧ讲鎸囦护宸插鍒讹紒')">{{ generateCmd(vps.ip) }}</div>
                             </div>
                             <div class="grid grid-cols-2 gap-3">
-                                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, ''), '单机节点普通订阅已复制！')">复制该机普通订阅</div>
-                                <div class="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, 'clash'), '单机节点Clash订阅已复制！')">复制该机Clash订阅</div>
+                                <div class="bg-gradient-to-br from-indigo-500 to-purple-600 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, ''), '鍗曟満鑺傜偣鏅€氳闃呭凡澶嶅埗锛?)">澶嶅埗璇ユ満鏅€氳闃?/div>
+                                <div class="bg-gradient-to-br from-orange-500 to-red-500 p-3 rounded-[1.25rem] cursor-pointer transition flex items-center justify-center text-white font-bold shadow-lg hover:scale-[1.02] active:scale-95 text-xs text-center" @click="copyCommand(generateSubLink(vps.ip, 'clash'), '鍗曟満鑺傜偣Clash璁㈤槄宸插鍒讹紒')">澶嶅埗璇ユ満Clash璁㈤槄</div>
                             </div>
                         </div>
                     </div>
@@ -489,99 +504,98 @@
 
             <div v-if="role === 'admin' && activeTab === 'users'" class="space-y-6">
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 flex flex-col xl:flex-row gap-4 items-end">
-                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">新建用户名</label><input v-model="newUser.username" placeholder="如: user01" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
-                    <div class="flex-1 w-full relative"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">登录密码 / 随机UUID</label><input v-model="newUser.password" type="text" placeholder="自定义密码 或 UUID" class="w-full bg-white/50 border border-white p-3 pr-12 rounded-2xl transition hover:bg-white focus:bg-white font-mono text-sm"><button @click="generateUUIDForNewUser" title="随机生成 UUID 密码" class="absolute right-3 top-[34px] p-1 bg-white rounded-lg shadow-sm hover:bg-indigo-50 transition-colors">🔄</button></div>
-                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">配额 (GB)</label><input v-model="newUser.traffic_limit_gb" type="number" placeholder="0为无限" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
-                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">有效期</label><input v-model="newUser.expire_date" type="date" class="w-full bg-white/50 border border-white p-3 rounded-2xl text-slate-600 transition hover:bg-white focus:bg-white"></div>
-                    <button @click="addUser" class="w-full xl:w-auto bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap">开通用户</button>
+                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鏂板缓鐢ㄦ埛鍚?/label><input v-model="newUser.username" placeholder="濡? user01" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
+                    <div class="flex-1 w-full relative"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鐧诲綍瀵嗙爜 / 闅忔満UUID</label><input v-model="newUser.password" type="text" placeholder="鑷畾涔夊瘑鐮?鎴?UUID" class="w-full bg-white/50 border border-white p-3 pr-12 rounded-2xl transition hover:bg-white focus:bg-white font-mono text-sm"><button @click="generateUUIDForNewUser" title="闅忔満鐢熸垚 UUID 瀵嗙爜" class="absolute right-3 top-[34px] p-1 bg-white rounded-lg shadow-sm hover:bg-indigo-50 transition-colors">馃攧</button></div>
+                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">閰嶉 (GB)</label><input v-model="newUser.traffic_limit_gb" type="number" placeholder="0涓烘棤闄? class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white"></div>
+                    <div class="flex-1 w-full"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鏈夋晥鏈?/label><input v-model="newUser.expire_date" type="date" class="w-full bg-white/50 border border-white p-3 rounded-2xl text-slate-600 transition hover:bg-white focus:bg-white"></div>
+                    <button @click="addUser" class="w-full xl:w-auto bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap">寮€閫氱敤鎴?/button>
                 </div>
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                     <div v-for="u in users" :key="u.username" class="bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 hover:shadow-indigo-100/50 transition-all">
-                        <div class="flex justify-between items-start mb-6"><div><h3 class="text-2xl font-black text-slate-800 mb-1 flex items-center gap-2">{{ u.username }} <span v-if="u.enable===0" class="text-[10px] bg-rose-100 text-rose-600 px-2 py-1 rounded-lg">已封禁</span></h3><div class="text-xs text-slate-400 font-medium">到期: {{ formatDate(u.expire_time) }}</div></div><div class="flex gap-2"><button @click="toggleUser(u.username, u.enable===1?0:1)" class="px-3 py-1.5 bg-white border border-slate-100 hover:bg-slate-50 rounded-xl text-xs font-bold shadow-sm">{{ u.enable===1?'停用':'启用' }}</button><button @click="deleteUser(u.username)" class="px-3 py-1.5 bg-rose-50 text-rose-500 rounded-xl text-xs font-bold transition-all">删除</button></div></div>
-                        <div class="flex justify-between text-xs text-slate-500 mb-2 font-bold"><span>已用: {{ formatBytes(u.traffic_used) }}</span><span>上限: {{ u.traffic_limit > 0 ? formatBytes(u.traffic_limit) : '无限' }}</span></div>
+                        <div class="flex justify-between items-start mb-6"><div><h3 class="text-2xl font-black text-slate-800 mb-1 flex items-center gap-2">{{ u.username }} <span v-if="u.enable===0" class="text-[10px] bg-rose-100 text-rose-600 px-2 py-1 rounded-lg">宸插皝绂?/span></h3><div class="text-xs text-slate-400 font-medium">鍒版湡: {{ formatDate(u.expire_time) }}</div></div><div class="flex gap-2"><button @click="toggleUser(u.username, u.enable===1?0:1)" class="px-3 py-1.5 bg-white border border-slate-100 hover:bg-slate-50 rounded-xl text-xs font-bold shadow-sm">{{ u.enable===1?'鍋滅敤':'鍚敤' }}</button><button @click="deleteUser(u.username)" class="px-3 py-1.5 bg-rose-50 text-rose-500 rounded-xl text-xs font-bold transition-all">鍒犻櫎</button></div></div>
+                        <div class="flex justify-between text-xs text-slate-500 mb-2 font-bold"><span>宸茬敤: {{ formatBytes(u.traffic_used) }}</span><span>涓婇檺: {{ u.traffic_limit > 0 ? formatBytes(u.traffic_limit) : '鏃犻檺' }}</span></div>
                         <div class="w-full bg-slate-100 rounded-full h-2.5 mb-3 overflow-hidden shadow-inner"><div :class="(u.traffic_limit > 0 && u.traffic_used >= u.traffic_limit) ? 'bg-rose-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'" class="h-2.5 rounded-full" :style="{ width: getTrafficPercent(u.traffic_used, u.traffic_limit) + '%' }"></div></div>
-                        <button v-if="u.traffic_used > 0" @click="resetUserTraffic(u.username)" class="text-[11px] text-indigo-500 font-bold hover:underline">重置流量</button>
+                        <button v-if="u.traffic_used > 0" @click="resetUserTraffic(u.username)" class="text-[11px] text-indigo-500 font-bold hover:underline">閲嶇疆娴侀噺</button>
                     </div>
                 </div>
             </div>
 
-            <!-- 住宅IP代理控制器 -->
+            <!-- 浣忓畢IP浠ｇ悊鎺у埗鍣?-->
             <div v-if="role === 'admin' && activeTab === 'proxy'" class="space-y-6">
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40">
                     <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                        住宅IP代理控制系统
+                        浣忓畢IP浠ｇ悊鎺у埗绯荤粺
                     </h2>
-                    <p class="text-slate-500 text-sm mb-6">基于 Cloudflare Workers 的主备双活代理调度系统</p>
+                    <p class="text-slate-500 text-sm mb-6">鍩轰簬 Cloudflare Workers 鐨勪富澶囧弻娲讳唬鐞嗚皟搴︾郴缁?/p>
                     
                     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-2">目标国家</label>
+                                <label class="block text-xs font-bold text-slate-400 mb-2">鐩爣鍥藉</label>
                                 <input type="text" v-model="proxyConfig.country" maxlength="2" class="w-full bg-white/50 border border-white p-3 rounded-2xl font-bold uppercase" placeholder="JP" />
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-2">代理端口</label>
+                                <label class="block text-xs font-bold text-slate-400 mb-2">浠ｇ悊绔彛</label>
                                 <input type="number" v-model="proxyConfig.port" class="w-full bg-white/50 border border-white p-3 rounded-2xl font-bold" placeholder="7920" />
                             </div>
                         </div>
                         <div class="space-y-4">
                             <div>
-                                <label class="block text-xs font-bold text-slate-400 mb-2">代理凭证</label>
+                                <label class="block text-xs font-bold text-slate-400 mb-2">浠ｇ悊鍑瘉</label>
                                 <div class="bg-slate-900/50 p-3 rounded-2xl">
-                                    <div class="text-xs text-slate-400 mb-1">用户名: <span class="text-indigo-300 font-mono">proxy</span></div>
-                                    <div class="text-xs text-slate-400">密码: <span class="text-amber-300 font-mono">888888</span></div>
+                                    <div class="text-xs text-slate-400 mb-1">鐢ㄦ埛鍚? <span class="text-indigo-300 font-mono">proxy</span></div>
+                                    <div class="text-xs text-slate-400">瀵嗙爜: <span class="text-amber-300 font-mono">888888</span></div>
                                 </div>
                             </div>
                             <div class="flex gap-2">
-                                <button @click="saveProxyConfig" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2.5 rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all">下发配置</button>
-                                <button @click="switchProxyIP" class="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold py-2.5 rounded-xl shadow-lg hover:shadow-pink-500/50 transition-all">强制更换IP</button>
+                                <button @click="saveProxyConfig" class="flex-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white font-bold py-2.5 rounded-xl shadow-lg hover:shadow-purple-500/50 transition-all">涓嬪彂閰嶇疆</button>
+                                <button @click="switchProxyIP" class="flex-1 bg-gradient-to-r from-pink-600 to-rose-600 text-white font-bold py-2.5 rounded-xl shadow-lg hover:shadow-pink-500/50 transition-all">寮哄埗鏇存崲IP</button>
                             </div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">活跃节点</h3>
-                    <div id="proxy-nodes" class="text-slate-500">暂无节点数据</div>
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">娲昏穬鑺傜偣</h3>
+                    <div id="proxy-nodes" class="text-slate-500">鏆傛棤鑺傜偣鏁版嵁</div>
                 </div>
             </div>
 
-            <!-- 住宅IP代理控制器 - 用户端 -->
+            <!-- 浣忓畢IP浠ｇ悊鎺у埗鍣?- 鐢ㄦ埛绔?-->
             <div v-if="role === 'user' && activeTab === 'proxy'" class="space-y-6">
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40">
                     <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
                         <span class="w-2 h-2 rounded-full bg-purple-500"></span>
-                        住宅IP代理连接信息
+                        浣忓畢IP浠ｇ悊杩炴帴淇℃伅
                     </h2>
-                    <p class="text-slate-500 text-sm mb-6">您可以通过以下 SOCKS5 代理出口连接到住宅IP节点</p>
+                    <p class="text-slate-500 text-sm mb-6">鎮ㄥ彲浠ラ€氳繃浠ヤ笅 SOCKS5 浠ｇ悊鍑哄彛杩炴帴鍒颁綇瀹匢P鑺傜偣</p>
 
                     <div class="bg-purple-50/70 rounded-2xl p-6 border border-purple-100">
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
-                                <div class="text-xs text-slate-400 font-bold mb-2">代理协议</div>
+                                <div class="text-xs text-slate-400 font-bold mb-2">浠ｇ悊鍗忚</div>
                                 <div class="text-lg font-bold text-slate-800">SOCKS5</div>
                             </div>
                             <div>
-                                <div class="text-xs text-slate-400 font-bold mb-2">默认凭证</div>
+                                <div class="text-xs text-slate-400 font-bold mb-2">榛樿鍑瘉</div>
                                 <div class="bg-slate-900/50 p-3 rounded-xl">
-                                    <div class="text-xs text-slate-400 mb-1">用户名: <span class="text-indigo-300 font-mono">proxy</span></div>
-                                    <div class="text-xs text-slate-400">密码: <span class="text-amber-300 font-mono">888888</span></div>
+                                    <div class="text-xs text-slate-400 mb-1">鐢ㄦ埛鍚? <span class="text-indigo-300 font-mono">proxy</span></div>
+                                    <div class="text-xs text-slate-400">瀵嗙爜: <span class="text-amber-300 font-mono">888888</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="mt-4 text-xs text-slate-500">
-                            <div class="mb-2">连接格式: <code class="bg-slate-800 text-emerald-400 px-2 py-1 rounded font-mono">socks5://proxy:888888@服务器IP:7920</code></div>
-                            <div>提示: 具体可用节点和端口请咨询管理员。</div>
+                            <div class="mb-2">杩炴帴鏍煎紡: <code class="bg-slate-800 text-emerald-400 px-2 py-1 rounded font-mono">socks5://proxy:888888@鏈嶅姟鍣↖P:7920</code></div>
+                            <div>鎻愮ず: 鍏蜂綋鍙敤鑺傜偣鍜岀鍙ｈ鍜ㄨ绠＄悊鍛樸€?/div>
                         </div>
                     </div>
                 </div>
 
                 <div class="bg-white/60 backdrop-blur-xl p-6 md:p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40">
-                    <h3 class="text-lg font-bold text-slate-800 mb-4">已分配代理节点</h3>
+                    <h3 class="text-lg font-bold text-slate-800 mb-4">宸插垎閰嶄唬鐞嗚妭鐐?/h3>
                     <div v-if="nodes.filter(n => n.protocol === 'Socks5').length === 0" class="text-slate-400 text-sm text-center py-8">
-                        暂无可用代理节点，请联系管理员开通。
-                    </div>
+                        鏆傛棤鍙敤浠ｇ悊鑺傜偣锛岃鑱旂郴绠＄悊鍛樺紑閫氥€?                    </div>
                     <div v-for="node in nodes.filter(n => n.protocol === 'Socks5')" :key="node.id" class="bg-purple-50/50 p-4 rounded-2xl border border-purple-100 mb-3">
                         <div class="flex justify-between items-center">
                             <div>
@@ -590,7 +604,7 @@
                                     socks5://{{ node.uuid }}:{{ node.private_key }}@{{ node.vps_ip }}:{{ node.port }}
                                 </div>
                             </div>
-                            <button @click="copyCommand('socks5://' + node.uuid + ':' + node.private_key + '@' + node.vps_ip + ':' + node.port, '代理链接已复制！')" class="text-xs bg-purple-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-purple-700 transition-all">复制</button>
+                            <button @click="copyCommand('socks5://' + node.uuid + ':' + node.private_key + '@' + node.vps_ip + ':' + node.port, '浠ｇ悊閾炬帴宸插鍒讹紒')" class="text-xs bg-purple-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-purple-700 transition-all">澶嶅埗</button>
                         </div>
                     </div>
                 </div>
@@ -599,21 +613,21 @@
             <div v-if="role === 'user' && activeTab === 'dashboard'" class="space-y-8">
                 <div class="bg-white/60 backdrop-blur-xl p-10 md:p-16 rounded-[3rem] shadow-2xl border border-white text-center relative overflow-hidden">
                     <div class="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-lg h-32 bg-indigo-400/20 blur-3xl rounded-full pointer-events-none"></div>
-                    <h2 class="text-4xl md:text-5xl font-black mb-3 text-slate-800 relative z-10">Hi, {{ currentUser }} 👋</h2>
-                    <p class="text-slate-500 mb-10 font-medium relative z-10">欢迎来到您的专属网络服务中心</p>
+                    <h2 class="text-4xl md:text-5xl font-black mb-3 text-slate-800 relative z-10">Hi, {{ currentUser }} 馃憢</h2>
+                    <p class="text-slate-500 mb-10 font-medium relative z-10">娆㈣繋鏉ュ埌鎮ㄧ殑涓撳睘缃戠粶鏈嶅姟涓績</p>
                     <div class="max-w-md mx-auto bg-white/80 p-8 rounded-[2rem] border border-white shadow-xl shadow-slate-200/50 mb-10 relative z-10">
-                        <div class="flex justify-between text-sm font-black text-slate-700 mb-3"><span>已用流量: {{ formatBytes(users[0]?.traffic_used || 0) }}</span><span class="text-indigo-600">总量: {{ users[0]?.traffic_limit > 0 ? formatBytes(users[0].traffic_limit) : '无限制' }}</span></div>
+                        <div class="flex justify-between text-sm font-black text-slate-700 mb-3"><span>宸茬敤娴侀噺: {{ formatBytes(users[0]?.traffic_used || 0) }}</span><span class="text-indigo-600">鎬婚噺: {{ users[0]?.traffic_limit > 0 ? formatBytes(users[0].traffic_limit) : '鏃犻檺鍒? }}</span></div>
                         <div class="w-full bg-slate-100 rounded-full h-3 overflow-hidden shadow-inner mb-4"><div :class="users[0]?.traffic_used >= users[0]?.traffic_limit && users[0]?.traffic_limit > 0 ? 'bg-rose-500' : 'bg-gradient-to-r from-blue-400 to-indigo-500'" class="h-3 transition-all duration-1000 rounded-full" :style="{ width: getTrafficPercent(users[0]?.traffic_used||0, users[0]?.traffic_limit||0) + '%' }"></div></div>
-                        <div class="flex justify-between mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium"><span>账户状态: <span :class="users[0]?.enable === 1 ? 'text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded' : 'text-rose-500 font-bold bg-rose-50 px-2 py-1 rounded'">{{ users[0]?.enable === 1 ? '🟢 正常运行' : '🔴 已被封禁' }}</span></span><span>到期时间: <span class="font-bold text-slate-700">{{ formatDate(users[0]?.expire_time) }}</span></span></div>
+                        <div class="flex justify-between mt-4 pt-4 border-t border-slate-100 text-xs text-slate-500 font-medium"><span>璐︽埛鐘舵€? <span :class="users[0]?.enable === 1 ? 'text-emerald-500 font-bold bg-emerald-50 px-2 py-1 rounded' : 'text-rose-500 font-bold bg-rose-50 px-2 py-1 rounded'">{{ users[0]?.enable === 1 ? '馃煝 姝ｅ父杩愯' : '馃敶 宸茶灏佺' }}</span></span><span>鍒版湡鏃堕棿: <span class="font-bold text-slate-700">{{ formatDate(users[0]?.expire_time) }}</span></span></div>
                     </div>
                     <div class="flex flex-col md:flex-row justify-center gap-4 relative z-10">
-                        <button @click="copyCommand(generateSubLink('', ''), '普通订阅链接已复制！')" class="bg-gradient-to-r from-slate-800 to-black text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">🔗 复制普通订阅</button>
-                        <button @click="copyCommand(generateSubLink('', 'clash'), 'Clash订阅链接已复制！')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">🔗 复制Clash订阅</button>
-                        <button @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">📱 显示二维码</button>
+                        <button @click="copyCommand(generateSubLink('', ''), '鏅€氳闃呴摼鎺ュ凡澶嶅埗锛?)" class="bg-gradient-to-r from-slate-800 to-black text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">馃敆 澶嶅埗鏅€氳闃?/button>
+                        <button @click="copyCommand(generateSubLink('', 'clash'), 'Clash璁㈤槄閾炬帴宸插鍒讹紒')" class="bg-gradient-to-r from-orange-500 to-red-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">馃敆 澶嶅埗Clash璁㈤槄</button>
+                        <button @click="showQrCode(generateSubLink('', ''))" class="bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-black py-4 px-8 rounded-full shadow-2xl transition-all transform hover:scale-105 active:scale-95 text-lg">馃摫 鏄剧ず浜岀淮鐮?/button>
                     </div>
                 </div>
                 <div>
-                    <h3 class="font-black text-xl mb-6 text-slate-700 px-4">📍 我已开通的节点</h3>
+                    <h3 class="font-black text-xl mb-6 text-slate-700 px-4">馃搷 鎴戝凡寮€閫氱殑鑺傜偣</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <div v-for="node in nodes" :key="node.id" class="bg-white/70 backdrop-blur-xl p-6 rounded-[2rem] border border-white shadow-lg transition-all hover:-translate-y-1">
                             <div class="font-black text-xl mb-4 text-slate-800">{{ getVpsName(node.vps_ip) }}</div>
@@ -626,97 +640,97 @@
             <div v-if="activeTab === 'settings'" class="space-y-6">
                 <template v-if="role === 'admin'">
                     <div class="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/40">
-                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">⚙️ KUI 代理系统参数</h3>
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">鈿欙笍 KUI 浠ｇ悊绯荤粺鍙傛暟</h3>
                         <div class="max-w-md mb-6">
-                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">控制面板全局名称</label>
-                            <div class="flex gap-3"><input v-model="siteTitleInput" placeholder="Cluster Gateway" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white text-sm font-medium"><button @click="saveSiteTitle" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-md whitespace-nowrap">保存更改</button></div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">鎺у埗闈㈡澘鍏ㄥ眬鍚嶇О</label>
+                            <div class="flex gap-3"><input v-model="siteTitleInput" placeholder="Cluster Gateway" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white text-sm font-medium"><button @click="saveSiteTitle" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-md whitespace-nowrap">淇濆瓨鏇存敼</button></div>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">管理员订阅防泄漏重置</label>
-                            <button @click="resetMySubLink" class="bg-rose-50 text-rose-600 border border-rose-100 px-6 py-3 rounded-2xl font-bold hover:bg-rose-100 transition-all shadow-sm">⚠️ 一键重置我的订阅令牌</button>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">绠＄悊鍛樿闃呴槻娉勬紡閲嶇疆</label>
+                            <button @click="resetMySubLink" class="bg-rose-50 text-rose-600 border border-rose-100 px-6 py-3 rounded-2xl font-bold hover:bg-rose-100 transition-all shadow-sm">鈿狅笍 涓€閿噸缃垜鐨勮闃呬护鐗?/button>
                         </div>
                     </div>
 
                     <div class="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/40">
                         <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center justify-between">
-                            <div class="flex items-center gap-2">📊 探针大盘外观与设置</div>
-                            <button @click="pullGithubNodes" class="text-xs bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-200 transition-colors shadow-sm">🔄 云端拉取最新主题/测速库</button>
+                            <div class="flex items-center gap-2">馃搳 鎺㈤拡澶х洏澶栬涓庤缃?/div>
+                            <button @click="pullGithubNodes" class="text-xs bg-emerald-100 text-emerald-600 px-3 py-1.5 rounded-lg font-bold hover:bg-emerald-200 transition-colors shadow-sm">馃攧 浜戠鎷夊彇鏈€鏂颁富棰?娴嬮€熷簱</button>
                         </h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                             <div class="space-y-4">
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">大盘展示标题</label><input v-model="probeSys.site_title" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">澶х洏灞曠ず鏍囬</label><input v-model="probeSys.site_title" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
                                 <div>
-                                    <label class="block text-xs font-bold text-slate-500 mb-1">前端主题风格</label>
+                                    <label class="block text-xs font-bold text-slate-500 mb-1">鍓嶇涓婚椋庢牸</label>
                                     <select v-model="probeSys.theme" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700">
                                         <option v-for="t in availableThemes" :key="t.id" :value="t.id">{{ t.name }}</option>
                                     </select>
                                 </div>
-                                <div v-if="probeSys.theme === 'theme6' || hasCustomCssFlag"><label class="block text-xs font-bold text-slate-500 mb-1">自定义 CSS 代码</label><textarea v-model="probeSys.custom_css" rows="3" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">自定义背景图片 URL (清空恢复纯色)</label><input v-model="probeSys.custom_bg" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">自定义 &lt;head&gt; 注入</label><textarea v-model="probeSys.custom_head" rows="2" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">自定义底部 Script 注入</label><textarea v-model="probeSys.custom_script" rows="2" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">探针客户端上报间隔 (秒)</label><input type="number" v-model="probeSys.report_interval" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                                <div v-if="probeSys.theme === 'theme6' || hasCustomCssFlag"><label class="block text-xs font-bold text-slate-500 mb-1">鑷畾涔?CSS 浠ｇ爜</label><textarea v-model="probeSys.custom_css" rows="3" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鑷畾涔夎儗鏅浘鐗?URL (娓呯┖鎭㈠绾壊)</label><input v-model="probeSys.custom_bg" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鑷畾涔?&lt;head&gt; 娉ㄥ叆</label><textarea v-model="probeSys.custom_head" rows="2" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鑷畾涔夊簳閮?Script 娉ㄥ叆</label><textarea v-model="probeSys.custom_script" rows="2" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-mono"></textarea></div>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鎺㈤拡瀹㈡埛绔笂鎶ラ棿闅?(绉?</label><input type="number" v-model="probeSys.report_interval" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
                             </div>
                             <div class="space-y-4">
-                                <label class="block text-sm font-bold text-slate-700 mb-2">👁️ 前台展示控制</label>
-                                <label class="flex items-center gap-2 text-sm bg-yellow-50 p-2 border border-yellow-200 rounded-lg cursor-pointer"><input type="checkbox" v-model="probeSys.auto_reset_traffic" true-value="true" false-value="false" class="w-4 h-4"> <span class="flex-1">启用流量按期重置 (全局总控开关)<br><span class="text-[10px] text-slate-500">开启后各节点根据独立【重置日】自动清零流量。关闭则显示累计总流量。</span></span></label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.is_public" true-value="true" false-value="false" class="w-4 h-4"> 开启公开访问 (取消勾选必须登录)</label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_price" true-value="true" false-value="false" class="w-4 h-4"> 显示机器价格</label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_expire" true-value="true" false-value="false" class="w-4 h-4"> 显示机器到期时间</label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_bw" true-value="true" false-value="false" class="w-4 h-4"> 显示带宽徽章</label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_tf" true-value="true" false-value="false" class="w-4 h-4"> 显示流量配额徽章</label>
-                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.enable_popup" true-value="true" false-value="false" class="w-4 h-4"> 开启首页访问公告弹窗 (支持HTML)</label>
-                                <div v-if="probeSys.enable_popup === 'true'"><textarea v-model="probeSys.popup_content" rows="4" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm" placeholder="<h3>公告</h3><p>内容...</p>"></textarea></div>
+                                <label class="block text-sm font-bold text-slate-700 mb-2">馃憗锔?鍓嶅彴灞曠ず鎺у埗</label>
+                                <label class="flex items-center gap-2 text-sm bg-yellow-50 p-2 border border-yellow-200 rounded-lg cursor-pointer"><input type="checkbox" v-model="probeSys.auto_reset_traffic" true-value="true" false-value="false" class="w-4 h-4"> <span class="flex-1">鍚敤娴侀噺鎸夋湡閲嶇疆 (鍏ㄥ眬鎬绘帶寮€鍏?<br><span class="text-[10px] text-slate-500">寮€鍚悗鍚勮妭鐐规牴鎹嫭绔嬨€愰噸缃棩銆戣嚜鍔ㄦ竻闆舵祦閲忋€傚叧闂垯鏄剧ず绱鎬绘祦閲忋€?/span></span></label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.is_public" true-value="true" false-value="false" class="w-4 h-4"> 寮€鍚叕寮€璁块棶 (鍙栨秷鍕鹃€夊繀椤荤櫥褰?</label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_price" true-value="true" false-value="false" class="w-4 h-4"> 鏄剧ず鏈哄櫒浠锋牸</label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_expire" true-value="true" false-value="false" class="w-4 h-4"> 鏄剧ず鏈哄櫒鍒版湡鏃堕棿</label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_bw" true-value="true" false-value="false" class="w-4 h-4"> 鏄剧ず甯﹀寰界珷</label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.show_tf" true-value="true" false-value="false" class="w-4 h-4"> 鏄剧ず娴侀噺閰嶉寰界珷</label>
+                                <label class="flex items-center gap-2 text-sm cursor-pointer"><input type="checkbox" v-model="probeSys.enable_popup" true-value="true" false-value="false" class="w-4 h-4"> 寮€鍚椤佃闂叕鍛婂脊绐?(鏀寔HTML)</label>
+                                <div v-if="probeSys.enable_popup === 'true'"><textarea v-model="probeSys.popup_content" rows="4" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm" placeholder="<h3>鍏憡</h3><p>鍐呭...</p>"></textarea></div>
 
-                                <label class="block text-sm font-bold text-blue-600 mt-6 mb-2">📡 动态下发三网测速节点配置</label>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">电信 (CT)</label>
+                                <label class="block text-sm font-bold text-blue-600 mt-6 mb-2">馃摗 鍔ㄦ€佷笅鍙戜笁缃戞祴閫熻妭鐐归厤缃?/label>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鐢典俊 (CT)</label>
                                     <select v-model="probeSys.ping_node_ct" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm">
-                                        <option value="default">默认节点 (双栈多节点轮询)</option>
+                                        <option value="default">榛樿鑺傜偣 (鍙屾爤澶氳妭鐐硅疆璇?</option>
                                         <option v-for="n in pingNodes.ct" :key="n.host" :value="n.host">{{ n.name }}</option>
                                     </select>
                                 </div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">联通 (CU)</label>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">鑱旈€?(CU)</label>
                                     <select v-model="probeSys.ping_node_cu" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm">
-                                        <option value="default">默认节点 (双栈多节点轮询)</option>
+                                        <option value="default">榛樿鑺傜偣 (鍙屾爤澶氳妭鐐硅疆璇?</option>
                                         <option v-for="n in pingNodes.cu" :key="n.host" :value="n.host">{{ n.name }}</option>
                                     </select>
                                 </div>
-                                <div><label class="block text-xs font-bold text-slate-500 mb-1">移动 (CM)</label>
+                                <div><label class="block text-xs font-bold text-slate-500 mb-1">绉诲姩 (CM)</label>
                                     <select v-model="probeSys.ping_node_cm" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm">
-                                        <option value="default">默认节点 (双栈多节点轮询)</option>
+                                        <option value="default">榛樿鑺傜偣 (鍙屾爤澶氳妭鐐硅疆璇?</option>
                                         <option v-for="n in pingNodes.cm" :key="n.host" :value="n.host">{{ n.name }}</option>
                                     </select>
                                 </div>
 
-                                <label class="block text-sm font-bold text-rose-500 mt-6 mb-2">✈️ Telegram 管理与告警设置</label>
+                                <label class="block text-sm font-bold text-rose-500 mt-6 mb-2">鉁堬笍 Telegram 绠＄悊涓庡憡璀﹁缃?/label>
                                 <div>
                                     <select v-model="probeSys.tg_notify" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm font-medium text-slate-700 mb-2">
-                                        <option value="false">关闭告警 (仅使用机器人控制面板)</option><option value="true">开启告警 (掉线自动推送)</option>
+                                        <option value="false">鍏抽棴鍛婅 (浠呬娇鐢ㄦ満鍣ㄤ汉鎺у埗闈㈡澘)</option><option value="true">寮€鍚憡璀?(鎺夌嚎鑷姩鎺ㄩ€?</option>
                                     </select>
-                                    <input v-model="probeSys.tg_bot_token" placeholder="Bot Token (必须填写以启用机器人命令)" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm mb-2">
-                                    <input v-model="probeSys.tg_chat_id" placeholder="Chat ID (管理员ID)" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm">
+                                    <input v-model="probeSys.tg_bot_token" placeholder="Bot Token (蹇呴』濉啓浠ュ惎鐢ㄦ満鍣ㄤ汉鍛戒护)" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm mb-2">
+                                    <input v-model="probeSys.tg_chat_id" placeholder="Chat ID (绠＄悊鍛業D)" class="w-full bg-white/50 border p-2.5 rounded-xl text-sm">
                                 </div>
                             </div>
                         </div>
-                        <button @click="saveProbeSettings" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-md">💾 立即生效配置</button>
+                        <button @click="saveProbeSettings" class="mt-6 bg-blue-600 text-white px-8 py-3 rounded-2xl font-bold hover:bg-blue-700 transition-all shadow-md">馃捑 绔嬪嵆鐢熸晥閰嶇疆</button>
                     </div>
 
                     <div class="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/40">
-                        <h3 class="text-xl font-black text-slate-800 mb-2 flex items-center gap-2">💻 探针服务端管理</h3>
-                        <p class="text-sm text-slate-500 mb-6 font-medium">提示：探针大盘已与 KUI Agent 深度统一！您在“服务器与节点”页面接入的机器会<b>自动</b>出现在此处。在这里只需维护展示信息即可，无需再次安装脚本。</p>
+                        <h3 class="text-xl font-black text-slate-800 mb-2 flex items-center gap-2">馃捇 鎺㈤拡鏈嶅姟绔鐞?/h3>
+                        <p class="text-sm text-slate-500 mb-6 font-medium">鎻愮ず锛氭帰閽堝ぇ鐩樺凡涓?KUI Agent 娣卞害缁熶竴锛佹偍鍦ㄢ€滄湇鍔″櫒涓庤妭鐐光€濋〉闈㈡帴鍏ョ殑鏈哄櫒浼?b>鑷姩</b>鍑虹幇鍦ㄦ澶勩€傚湪杩欓噷鍙渶缁存姢灞曠ず淇℃伅鍗冲彲锛屾棤闇€鍐嶆瀹夎鑴氭湰銆?/p>
 
                         <div class="overflow-x-auto bg-white rounded-2xl border border-slate-100 shadow-sm">
                             <table class="w-full text-left border-collapse text-sm">
-                                <thead><tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100"><th class="p-4">节点名称</th><th class="p-4">分组</th><th class="p-4">状态</th><th class="p-4">操作</th></tr></thead>
+                                <thead><tr class="bg-slate-50 text-slate-500 font-bold border-b border-slate-100"><th class="p-4">鑺傜偣鍚嶇О</th><th class="p-4">鍒嗙粍</th><th class="p-4">鐘舵€?/th><th class="p-4">鎿嶄綔</th></tr></thead>
                                 <tbody>
-                                    <tr v-if="adminProbeServers.length===0"><td colspan="4" class="p-6 text-center text-slate-400">暂无探针，请在上方添加</td></tr>
+                                    <tr v-if="adminProbeServers.length===0"><td colspan="4" class="p-6 text-center text-slate-400">鏆傛棤鎺㈤拡锛岃鍦ㄤ笂鏂规坊鍔?/td></tr>
                                     <tr v-for="s in adminProbeServers" :key="s.id" class="border-b border-slate-50 hover:bg-slate-50">
-                                        <td class="p-4 font-bold text-slate-700">{{ s.name }} <span v-if="s.is_hidden==='true'" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded">隐藏</span></td>
-                                        <td class="p-4">{{ s.server_group || '默认分组' }}</td>
-                                        <td class="p-4"><span v-if="isOnline(s.last_updated)" class="text-emerald-500 font-bold">● 在线</span><span v-else class="text-rose-500 font-bold">● 离线</span></td>
+                                        <td class="p-4 font-bold text-slate-700">{{ s.name }} <span v-if="s.is_hidden==='true'" class="text-[10px] bg-slate-200 text-slate-600 px-2 py-0.5 rounded">闅愯棌</span></td>
+                                        <td class="p-4">{{ s.server_group || '榛樿鍒嗙粍' }}</td>
+                                        <td class="p-4"><span v-if="isOnline(s.last_updated)" class="text-emerald-500 font-bold">鈼?鍦ㄧ嚎</span><span v-else class="text-rose-500 font-bold">鈼?绂荤嚎</span></td>
                                         <td class="p-4 flex gap-2">
-                                            <button @click="openProbeEditModal(s)" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition">编辑展示信息</button>
-                                            <button @click="deleteProbeNode(s.id)" class="bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-lg font-bold transition">删除记录</button>
+                                            <button @click="openProbeEditModal(s)" class="bg-blue-50 text-blue-600 hover:bg-blue-100 px-3 py-1.5 rounded-lg font-bold transition">缂栬緫灞曠ず淇℃伅</button>
+                                            <button @click="deleteProbeNode(s.id)" class="bg-rose-50 text-rose-600 hover:bg-rose-100 px-3 py-1.5 rounded-lg font-bold transition">鍒犻櫎璁板綍</button>
                                         </td>
                                     </tr>
                                 </tbody>
@@ -727,16 +741,16 @@
 
                 <template v-if="role === 'user'">
                     <div class="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/40">
-                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">🔑 账号安全</h3>
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">馃攽 璐﹀彿瀹夊叏</h3>
                         <div class="max-w-md">
-                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">修改登录密码</label>
-                            <div class="flex gap-3"><input v-model="userNewPassword" type="password" placeholder="请输入新密码" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white text-sm font-medium"><button @click="updateUserPassword" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-md whitespace-nowrap">确认修改</button></div>
+                            <label class="block text-xs font-bold text-slate-400 mb-2 pl-2">淇敼鐧诲綍瀵嗙爜</label>
+                            <div class="flex gap-3"><input v-model="userNewPassword" type="password" placeholder="璇疯緭鍏ユ柊瀵嗙爜" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white text-sm font-medium"><button @click="updateUserPassword" class="bg-indigo-600 text-white px-6 py-3 rounded-2xl font-bold hover:bg-indigo-700 transition-all shadow-md whitespace-nowrap">纭淇敼</button></div>
                         </div>
                     </div>
                     <div class="bg-white/60 backdrop-blur-xl p-8 rounded-[2.5rem] border border-white shadow-xl shadow-slate-200/40">
-                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">🔄 订阅连接重置</h3>
-                        <p class="text-sm text-slate-500 mb-4 font-medium">如果您的订阅链接泄露给他人，请立刻在此重置。系统将自动生成全新的独立 UUID 订阅密钥（不影响您的登录密码），旧链接瞬间失效。</p>
-                        <button @click="resetMySubLink" class="bg-rose-50 text-rose-600 border border-rose-100 px-6 py-3 rounded-2xl font-bold hover:bg-rose-100 transition-all shadow-sm">⚠️ 重置并吊销旧订阅</button>
+                        <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">馃攧 璁㈤槄杩炴帴閲嶇疆</h3>
+                        <p class="text-sm text-slate-500 mb-4 font-medium">濡傛灉鎮ㄧ殑璁㈤槄閾炬帴娉勯湶缁欎粬浜猴紝璇风珛鍒诲湪姝ら噸缃€傜郴缁熷皢鑷姩鐢熸垚鍏ㄦ柊鐨勭嫭绔?UUID 璁㈤槄瀵嗛挜锛堜笉褰卞搷鎮ㄧ殑鐧诲綍瀵嗙爜锛夛紝鏃ч摼鎺ョ灛闂村け鏁堛€?/p>
+                        <button @click="resetMySubLink" class="bg-rose-50 text-rose-600 border border-rose-100 px-6 py-3 rounded-2xl font-bold hover:bg-rose-100 transition-all shadow-sm">鈿狅笍 閲嶇疆骞跺悐閿€鏃ц闃?/button>
                     </div>
                 </template>
             </div>
@@ -746,30 +760,30 @@
         <div v-if="probeEditModalOpen" class="fixed inset-0 z-[200] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
             <div class="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-lg relative max-h-[90vh] overflow-y-auto">
                 <button @click="probeEditModalOpen = false" class="absolute top-4 right-5 text-2xl text-slate-400 hover:text-slate-600">&times;</button>
-                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">✏️ 编辑探针展示信息</h3>
+                <h3 class="text-xl font-black text-slate-800 mb-6 flex items-center gap-2">鉁忥笍 缂栬緫鎺㈤拡灞曠ず淇℃伅</h3>
                 <div class="space-y-4">
                     <div class="flex gap-4">
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">展示别名</label><input v-model="editingProbeNode.name" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">前台可见性</label><select v-model="editingProbeNode.is_hidden" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"><option value="false">显示 (默认)</option><option value="true">隐藏</option></select></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">灞曠ず鍒悕</label><input v-model="editingProbeNode.name" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">鍓嶅彴鍙鎬?/label><select v-model="editingProbeNode.is_hidden" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"><option value="false">鏄剧ず (榛樿)</option><option value="true">闅愯棌</option></select></div>
                     </div>
-                    <div><label class="block text-xs font-bold text-slate-500 mb-1">分组名称</label><input v-model="editingProbeNode.server_group" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                    <div><label class="block text-xs font-bold text-slate-500 mb-1">鍒嗙粍鍚嶇О</label><input v-model="editingProbeNode.server_group" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
                     <div class="flex gap-4">
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">价格</label><input v-model="editingProbeNode.price" placeholder="如: 10USD/年" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">到期时间</label><input type="date" v-model="editingProbeNode.expire_date" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">浠锋牸</label><input v-model="editingProbeNode.price" placeholder="濡? 10USD/骞? class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">鍒版湡鏃堕棿</label><input type="date" v-model="editingProbeNode.expire_date" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
                     </div>
                     <div class="flex gap-4">
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">带宽 (徽章)</label><input v-model="editingProbeNode.bandwidth" placeholder="如: 1Gbps" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
-                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">流量总量 (徽章)</label><input v-model="editingProbeNode.traffic_limit" placeholder="如: 1TB/月" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">甯﹀ (寰界珷)</label><input v-model="editingProbeNode.bandwidth" placeholder="濡? 1Gbps" class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
+                        <div class="flex-1"><label class="block text-xs font-bold text-slate-500 mb-1">娴侀噺鎬婚噺 (寰界珷)</label><input v-model="editingProbeNode.traffic_limit" placeholder="濡? 1TB/鏈? class="w-full border p-2.5 rounded-xl text-sm font-medium text-slate-700"></div>
                     </div>
                     <div class="bg-amber-50 p-4 border border-amber-100 rounded-xl mt-2">
-                        <label class="block text-xs font-bold text-amber-700 mb-1">每月流量重置日 (1-31)</label>
-                        <p class="text-[10px] text-amber-600 mb-2">需在【系统设置】开启“启用流量按期重置”。到达此日时该机器记录流量自动清零。</p>
+                        <label class="block text-xs font-bold text-amber-700 mb-1">姣忔湀娴侀噺閲嶇疆鏃?(1-31)</label>
+                        <p class="text-[10px] text-amber-600 mb-2">闇€鍦ㄣ€愮郴缁熻缃€戝紑鍚€滃惎鐢ㄦ祦閲忔寜鏈熼噸缃€濄€傚埌杈炬鏃ユ椂璇ユ満鍣ㄨ褰曟祦閲忚嚜鍔ㄦ竻闆躲€?/p>
                         <input type="number" min="1" max="31" v-model="editingProbeNode.reset_day" class="w-full border border-amber-200 p-2.5 rounded-xl text-sm font-medium text-amber-900 bg-white">
                     </div>
                 </div>
                 <div class="mt-8 flex justify-end gap-3">
-                    <button @click="probeEditModalOpen = false" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition">取消</button>
-                    <button @click="saveProbeEdit" class="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition">保存更改</button>
+                    <button @click="probeEditModalOpen = false" class="px-5 py-2.5 rounded-xl bg-slate-100 text-slate-600 font-bold hover:bg-slate-200 transition">鍙栨秷</button>
+                    <button @click="saveProbeEdit" class="px-5 py-2.5 rounded-xl bg-blue-600 text-white font-bold hover:bg-blue-700 shadow-md transition">淇濆瓨鏇存敼</button>
                 </div>
             </div>
         </div>
@@ -777,12 +791,12 @@
         <div v-if="qrModalOpen" class="fixed inset-0 z-[300] bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" @click.self="qrModalOpen = false">
             <div class="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-sm relative text-center">
                 <button @click="qrModalOpen = false" class="absolute top-4 right-5 text-2xl text-slate-400 hover:text-slate-600">&times;</button>
-                <h3 class="text-xl font-black text-slate-800 mb-2">订阅二维码</h3>
-                <p class="text-xs text-slate-500 mb-6">请使用客户端扫描 (暂仅支持普通订阅解析)</p>
+                <h3 class="text-xl font-black text-slate-800 mb-2">璁㈤槄浜岀淮鐮?/h3>
+                <p class="text-xs text-slate-500 mb-6">璇蜂娇鐢ㄥ鎴风鎵弿 (鏆備粎鏀寔鏅€氳闃呰В鏋?</p>
                 <div class="flex justify-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
                     <img :src="qrCodeImage" alt="QR Code" class="w-48 h-48 object-contain rounded-xl">
                 </div>
-                <button @click="qrModalOpen = false" class="mt-6 w-full bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-black transition-all">关 闭</button>
+                <button @click="qrModalOpen = false" class="mt-6 w-full bg-slate-800 text-white px-4 py-3 rounded-xl font-bold hover:bg-black transition-all">鍏?闂?/button>
             </div>
         </div>
 
@@ -815,14 +829,14 @@
                 let initOsMap = {}; try { initOsMap = JSON.parse(localStorage.getItem('kui_deploy_os') || '{}'); } catch(e) {}
                 const deployOsMap = reactive(initOsMap);
 
-                // --- 动态拉取核心 ---
+                // --- 鍔ㄦ€佹媺鍙栨牳蹇?---
                 const availableThemes = ref([
-                    { id: "theme1", name: "1. 默认清爽白 (Classic)", is_dark: false, css: "" },
-                    { id: "theme2", name: "2. 暗黑极客 (Dark)", is_dark: true, css: "" },
-                    { id: "theme3", name: "3. 新粗野主义 (Brutalism)", is_dark: false, css: "" },
-                    { id: "theme4", name: "4. 动态渐变毛玻璃 (Glass)", is_dark: true, css: "" },
-                    { id: "theme5", name: "5. 赛博朋克 (Cyberpunk)", is_dark: true, css: "" },
-                    { id: "theme6", name: "6. 完全自定义 CSS", is_dark: true, has_custom_css: true, css: "" }
+                    { id: "theme1", name: "1. 榛樿娓呯埥鐧?(Classic)", is_dark: false, css: "" },
+                    { id: "theme2", name: "2. 鏆楅粦鏋佸 (Dark)", is_dark: true, css: "" },
+                    { id: "theme3", name: "3. 鏂扮矖閲庝富涔?(Brutalism)", is_dark: false, css: "" },
+                    { id: "theme4", name: "4. 鍔ㄦ€佹笎鍙樻瘺鐜荤拑 (Glass)", is_dark: true, css: "" },
+                    { id: "theme5", name: "5. 璧涘崥鏈嬪厠 (Cyberpunk)", is_dark: true, css: "" },
+                    { id: "theme6", name: "6. 瀹屽叏鑷畾涔?CSS", is_dark: true, has_custom_css: true, css: "" }
                 ]);
                 const pingNodes = reactive({ ct: [], cu: [], cm: [] });
 
@@ -905,8 +919,8 @@
 
                 const isOnline = (lastReport) => lastReport && (Date.now() - lastReport) < 60000;
                 const formatBytes = (bytes) => { const b = parseInt(bytes); if (isNaN(b) || b === 0) return '0 B'; const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'], i = Math.floor(Math.log(b) / Math.log(k)); return parseFloat((b / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]; };
-                const formatDate = (ts) => { if (!ts) return '永久'; const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
-                const getExpireText = (dateStr) => { if(!dateStr) return '永久'; const d = new Date(dateStr).getTime(); if(isNaN(d)) return '永久'; const diff = d - Date.now(); return diff > 0 ? Math.ceil(diff/86400000) + '天' : '已过期'; };
+                const formatDate = (ts) => { if (!ts) return '姘镐箙'; const d = new Date(ts); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; };
+                const getExpireText = (dateStr) => { if(!dateStr) return '姘镐箙'; const d = new Date(dateStr).getTime(); if(isNaN(d)) return '姘镐箙'; const diff = d - Date.now(); return diff > 0 ? Math.ceil(diff/86400000) + '澶? : '宸茶繃鏈?; };
                 const getTrafficPercent = (used, limit) => { if (!limit || limit === 0) return 0; return Math.min((used / limit) * 100, 100); };
                 const getPingColor = (ping) => { const p = parseInt(ping); if (p === 0 || isNaN(p)) return '#9ca3af'; if (p < 100) return '#10b981'; if (p < 200) return '#f59e0b'; return '#ef4444'; };
 
@@ -935,7 +949,7 @@
                     const groups = {}; 
                     const list = currentFilter.value === 'all' ? publicProbeServers.value : filteredProbeServers.value;
                     list.forEach(s => { 
-                        const g = (s.server_group || '默认分组').toString(); 
+                        const g = (s.server_group || '榛樿鍒嗙粍').toString(); 
                         if(!groups[g]) groups[g] = []; 
                         groups[g].push(s); 
                     }); 
@@ -948,8 +962,8 @@
                     const timestamp = Date.now().toString(); const signature = await generateHMAC(authKey.value, currentUser.value + timestamp);
                     options.headers = { ...options.headers, 'Authorization': `${btoa(currentUser.value)}.${timestamp}.${signature}` };
                     const res = await fetch(url, options);
-                    if (res.status === 401) { logout(); alert('⚠️ 登录已过期或无效，请重新登录'); throw new Error('Unauthorized'); }
-                    if (!res.ok) { const err = await res.json(); alert(`❌ 后端报错: ${err.error || err.message}`); throw new Error('API Failed'); }
+                    if (res.status === 401) { logout(); alert('鈿狅笍 鐧诲綍宸茶繃鏈熸垨鏃犳晥锛岃閲嶆柊鐧诲綍'); throw new Error('Unauthorized'); }
+                    if (!res.ok) { const err = await res.json(); alert(`鉂?鍚庣鎶ラ敊: ${err.error || err.message}`); throw new Error('API Failed'); }
                     return res;
                 };
 
@@ -964,8 +978,8 @@
                             isLoggedIn.value = true; showLoginModal.value = false; password.value = ''; 
                             activeTab.value = role.value === 'admin' ? 'nodes' : 'dashboard';
                             startPolling(); fetchProbeData();
-                        } else alert('⚠️ 账户名或密码错误');
-                    } catch (e) { alert('登录异常'); }
+                        } else alert('鈿狅笍 璐︽埛鍚嶆垨瀵嗙爜閿欒');
+                    } catch (e) { alert('鐧诲綍寮傚父'); }
                 };
                 
                 const logout = () => { localStorage.removeItem('kui_auth_key'); localStorage.removeItem('kui_user'); localStorage.removeItem('kui_role'); isLoggedIn.value = false; currentUser.value = ''; authKey.value = ''; activeTab.value = 'probe'; stopPolling(); startProbePolling();};
@@ -1004,7 +1018,7 @@
                     probeCharts.proc = createChart('probeChartProc', '#ec4899', 'rgba(236, 72, 153, 0.1)');
                     probeCharts.net = new Chart(document.getElementById('probeChartNet').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'In', data: [], borderColor: '#10b981', borderWidth: 2, tension: 0.4, pointRadius: 0 }, { label: 'Out', data: [], borderColor: '#3b82f6', borderWidth: 2, tension: 0.4, pointRadius: 0 } ]}, options: commonOptions });
                     probeCharts.conn = new Chart(document.getElementById('probeChartConn').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: 'TCP', data: [], borderColor: '#6366f1', borderWidth: 2, tension: 0.4, pointRadius: 0 }, { label: 'UDP', data: [], borderColor: '#d946ef', borderWidth: 2, tension: 0.4, pointRadius: 0 } ]}, options: commonOptions });
-                    probeCharts.ping = new Chart(document.getElementById('probeChartPing').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '电信', data: [], borderColor: '#10b981', backgroundColor: 'transparent' }, { label: '联通', data: [], borderColor: '#f59e0b', backgroundColor: 'transparent' }, { label: '移动', data: [], borderColor: '#3b82f6', backgroundColor: 'transparent' }, { label: '字节', data: [], borderColor: '#8b5cf6', backgroundColor: 'transparent' } ] }, options: pingOptions });
+                    probeCharts.ping = new Chart(document.getElementById('probeChartPing').getContext('2d'), { type: 'line', data: { labels: [], datasets: [ { label: '鐢典俊', data: [], borderColor: '#10b981', backgroundColor: 'transparent' }, { label: '鑱旈€?, data: [], borderColor: '#f59e0b', backgroundColor: 'transparent' }, { label: '绉诲姩', data: [], borderColor: '#3b82f6', backgroundColor: 'transparent' }, { label: '瀛楄妭', data: [], borderColor: '#8b5cf6', backgroundColor: 'transparent' } ] }, options: pingOptions });
                 };
 
                 const updateProbeDetailCharts = (data) => {
@@ -1028,15 +1042,15 @@
                     showWelcomePopup.value = false;
                 };
 
-                // --- GitHub 动态拉取 ---
+                // --- GitHub 鍔ㄦ€佹媺鍙?---
                 const pullGithubNodes = async () => {
                     try {
                         const res = await fetchApi('/api/probe/admin/pull_github', { method: 'POST' });
                         if (res.ok) {
-                            alert('✅ 云端主题与测速节点数据拉取成功！');
+                            alert('鉁?浜戠涓婚涓庢祴閫熻妭鐐规暟鎹媺鍙栨垚鍔燂紒');
                             refreshData(); fetchProbeData();
                         }
-                    } catch(e) { alert('拉取失败: ' + e); }
+                    } catch(e) { alert('鎷夊彇澶辫触: ' + e); }
                 };
 
                 let isFirstLoad = true;
@@ -1064,7 +1078,7 @@
                             if (probeView.value === 'map') drawMarkers();
                             if (probeSys.is_public !== 'true' && !isLoggedIn.value) showLoginModal.value = true;
                             
-                            // 弹窗逻辑
+                            // 寮圭獥閫昏緫
                             if (probeSys.enable_popup === 'true') {
                                 const lastSeen = localStorage.getItem('kui_popup_seen');
                                 if (!lastSeen || Date.now() - parseInt(lastSeen) > 86400000) showWelcomePopup.value = true;
@@ -1107,32 +1121,32 @@
                 };
 
                 const generateUUIDForNewUser = () => { newUser.password = crypto.randomUUID(); };
-                const addUser = async () => { if (!newUser.username || !newUser.password) return alert('请输入用户名和密码！'); const limit = newUser.traffic_limit_gb ? Math.floor(parseFloat(newUser.traffic_limit_gb) * 1073741824) : 0; const expire = newUser.expire_date ? new Date(newUser.expire_date).getTime() : 0; await fetchApi('/api/users', { method: 'POST', body: JSON.stringify({ ...newUser, traffic_limit: limit, expire_time: expire }) }); Object.assign(newUser, { username: '', password: '', traffic_limit_gb: '', expire_date: '' }); refreshData(); };
+                const addUser = async () => { if (!newUser.username || !newUser.password) return alert('璇疯緭鍏ョ敤鎴峰悕鍜屽瘑鐮侊紒'); const limit = newUser.traffic_limit_gb ? Math.floor(parseFloat(newUser.traffic_limit_gb) * 1073741824) : 0; const expire = newUser.expire_date ? new Date(newUser.expire_date).getTime() : 0; await fetchApi('/api/users', { method: 'POST', body: JSON.stringify({ ...newUser, traffic_limit: limit, expire_time: expire }) }); Object.assign(newUser, { username: '', password: '', traffic_limit_gb: '', expire_date: '' }); refreshData(); };
                 const toggleUser = async (username, status) => { await fetchApi('/api/users', { method: 'PUT', body: JSON.stringify({ username, enable: status }) }); refreshData(); };
-                const deleteUser = async (username) => { if(confirm('⚠️ 确定删除用户？节点将归还给管理员。')) { await fetchApi(`/api/users?username=${username}`, { method: 'DELETE' }); refreshData(); } };
+                const deleteUser = async (username) => { if(confirm('鈿狅笍 纭畾鍒犻櫎鐢ㄦ埛锛熻妭鐐瑰皢褰掕繕缁欑鐞嗗憳銆?)) { await fetchApi(`/api/users?username=${username}`, { method: 'DELETE' }); refreshData(); } };
                 const resetUserTraffic = async (username) => { await fetchApi('/api/users', { method: 'PUT', body: JSON.stringify({ username, reset_traffic: true }) }); refreshData(); };
-                const addVps = async () => { if(!newVps.value.ip || !newVps.value.name) return alert('请输入名称和IP'); deployOsMap[newVps.value.ip] = newVps.value.os; saveOsMap(); await fetchApi('/api/vps', { method: 'POST', body: JSON.stringify({ ip: newVps.value.ip, name: newVps.value.name }) }); newVps.value = { name: '', ip: '', os: 'debian' }; refreshData(); fetchProbeData();};
-                const deleteVps = async (ip) => { if(confirm('🧨 确定移除该机器？该机器相关的探针数据、节点数据将被完全清空！')) { await fetchApi(`/api/vps?ip=${ip}`, { method: 'DELETE' }); refreshData(); fetchProbeData();} };
+                const addVps = async () => { if(!newVps.value.ip || !newVps.value.name) return alert('璇疯緭鍏ュ悕绉板拰IP'); deployOsMap[newVps.value.ip] = newVps.value.os; saveOsMap(); await fetchApi('/api/vps', { method: 'POST', body: JSON.stringify({ ip: newVps.value.ip, name: newVps.value.name }) }); newVps.value = { name: '', ip: '', os: 'debian' }; refreshData(); fetchProbeData();};
+                const deleteVps = async (ip) => { if(confirm('馃Ж 纭畾绉婚櫎璇ユ満鍣紵璇ユ満鍣ㄧ浉鍏崇殑鎺㈤拡鏁版嵁銆佽妭鐐规暟鎹皢琚畬鍏ㄦ竻绌猴紒')) { await fetchApi(`/api/vps?ip=${ip}`, { method: 'DELETE' }); refreshData(); fetchProbeData();} };
 
                 const addNode = async (ip) => {
-                    const p = newNodeParams[ip]; if(!p.port) return alert('请填写端口!');
+                    const p = newNodeParams[ip]; if(!p.port) return alert('璇峰～鍐欑鍙?');
                     let limitBytes = p.traffic_limit_gb ? Math.floor(parseFloat(p.traffic_limit_gb) * 1073741824) : 0; let expireTs = p.expire_date ? new Date(p.expire_date).getTime() : 0;
                     const payload = { id: Date.now().toString(), uuid: crypto.randomUUID(), vps_ip: ip, protocol: p.protocol, port: p.port, username: p.username, traffic_limit: limitBytes, expire_time: expireTs, sni: p.sni || '' };
-                    if (['XTLS-Reality', 'H2-Reality', 'gRPC-Reality'].includes(p.protocol)) { const keys = generateRealityKeys(); payload.private_key = keys.privateKey; payload.public_key = keys.publicKey; payload.short_id = keys.shortId; } else if (p.protocol === 'TUIC') { if (!p.sni) return alert('TUIC 必填 SNI！'); payload.private_key = crypto.randomUUID().replace(/-/g, ''); } else if (p.protocol === 'Trojan' || p.protocol === 'AnyTLS') { const array = new Uint8Array(16); crypto.getRandomValues(array); payload.private_key = btoa(String.fromCharCode.apply(null, array)); } else if (p.protocol === 'Naive') { payload.uuid = crypto.randomUUID().replace(/-/g, '').substring(0, 16); payload.private_key = payload.uuid; } else if (p.protocol === 'VLESS-Argo') { payload.sni = '⏳ 正在等待 VPS 自动回传穿透域名...'; } else if (p.protocol === 'dokodemo-door') { payload.relay_type = p.relay_type; if (p.relay_type === 'external') { payload.target_ip = p.target_ip; payload.target_port = p.target_port; } else { payload.target_id = p.target_id; } }
+                    if (['XTLS-Reality', 'H2-Reality', 'gRPC-Reality'].includes(p.protocol)) { const keys = generateRealityKeys(); payload.private_key = keys.privateKey; payload.public_key = keys.publicKey; payload.short_id = keys.shortId; } else if (p.protocol === 'TUIC') { if (!p.sni) return alert('TUIC 蹇呭～ SNI锛?); payload.private_key = crypto.randomUUID().replace(/-/g, ''); } else if (p.protocol === 'Trojan' || p.protocol === 'AnyTLS') { const array = new Uint8Array(16); crypto.getRandomValues(array); payload.private_key = btoa(String.fromCharCode.apply(null, array)); } else if (p.protocol === 'Naive') { payload.uuid = crypto.randomUUID().replace(/-/g, '').substring(0, 16); payload.private_key = payload.uuid; } else if (p.protocol === 'VLESS-Argo') { payload.sni = '鈴?姝ｅ湪绛夊緟 VPS 鑷姩鍥炰紶绌块€忓煙鍚?..'; } else if (p.protocol === 'dokodemo-door') { payload.relay_type = p.relay_type; if (p.relay_type === 'external') { payload.target_ip = p.target_ip; payload.target_port = p.target_port; } else { payload.target_id = p.target_id; } }
                     await fetchApi('/api/nodes', { method: 'POST', body: JSON.stringify(payload) }); refreshData();
                 };
                 
                 const deployAllProtocols = async (ip) => {
-                    let startPort = parseInt(batchStartPort[ip]); if (!startPort || startPort < 10 || startPort > 65000) return alert('⚠️ 请输入有效的起始端口 (推荐: 8881)');
+                    let startPort = parseInt(batchStartPort[ip]); if (!startPort || startPort < 10 || startPort > 65000) return alert('鈿狅笍 璇疯緭鍏ユ湁鏁堢殑璧峰绔彛 (鎺ㄨ崘: 8881)');
                     const defaultSni = 'addons.mozilla.org'; const commonUser = batchUser[ip] || 'admin'; const commonUUID = crypto.randomUUID(); 
                     const protocolSequence = [ { protocol: 'XTLS-Reality', offset: 0, sni: defaultSni, type: 'reality' }, { protocol: 'Hysteria2', offset: 1, sni: defaultSni }, { protocol: 'TUIC', offset: 2, sni: defaultSni }, { protocol: 'Trojan', offset: 3, sni: defaultSni }, { protocol: 'H2-Reality', offset: 4, sni: defaultSni, type: 'reality' }, { protocol: 'gRPC-Reality', offset: 5, sni: defaultSni, type: 'reality' }, { protocol: 'AnyTLS', offset: 6, sni: defaultSni }, { protocol: 'Naive', offset: 7, sni: defaultSni } ];
-                    if (!confirm(`🚀 极速部署确认：\n\n系统将按照 FSCARMEN 模式，向该服务器并发下发完整 ${protocolSequence.length} 个协议矩阵：\n` + protocolSequence.map(p => `- ${p.protocol} (端口: ${startPort + p.offset})`).join('\n') + `\n\n所有节点归属: ${commonUser}\n\n确认立刻组建节点矩阵吗？`)) return;
+                    if (!confirm(`馃殌 鏋侀€熼儴缃茬‘璁わ細\n\n绯荤粺灏嗘寜鐓?FSCARMEN 妯″紡锛屽悜璇ユ湇鍔″櫒骞跺彂涓嬪彂瀹屾暣 ${protocolSequence.length} 涓崗璁煩闃碉細\n` + protocolSequence.map(p => `- ${p.protocol} (绔彛: ${startPort + p.offset})`).join('\n') + `\n\n鎵€鏈夎妭鐐瑰綊灞? ${commonUser}\n\n纭绔嬪埢缁勫缓鑺傜偣鐭╅樀鍚楋紵`)) return;
                     for (let item of protocolSequence) {
                         const payload = { id: Date.now().toString() + Math.floor(Math.random() * 10000), uuid: commonUUID, vps_ip: ip, protocol: item.protocol, port: startPort + item.offset, username: commonUser, traffic_limit: 0, expire_time: 0, sni: item.sni || '' };
                         if (item.type === 'reality') { const keys = generateRealityKeys(); payload.private_key = keys.privateKey; payload.public_key = keys.publicKey; payload.short_id = keys.shortId; } else if (item.protocol === 'Naive') { payload.uuid = commonUUID.replace(/-/g, '').substring(0, 16); payload.private_key = payload.uuid; } else { const array = new Uint8Array(16); crypto.getRandomValues(array); payload.private_key = btoa(String.fromCharCode.apply(null, array)); }
                         try { await fetchApi('/api/nodes', { method: 'POST', body: JSON.stringify(payload) }); } catch(e) {}
                     }
-                    batchStartPort[ip] = ''; alert("✅ 极速 8合1 全家桶部署指令已发送！\n\n远端探针将在约十秒后的心跳中自动拉取配置，请稍候。"); refreshData();
+                    batchStartPort[ip] = ''; alert("鉁?鏋侀€?8鍚? 鍏ㄥ妗堕儴缃叉寚浠ゅ凡鍙戦€侊紒\n\n杩滅鎺㈤拡灏嗗湪绾﹀崄绉掑悗鐨勫績璺充腑鑷姩鎷夊彇閰嶇疆锛岃绋嶅€欍€?); refreshData();
                 };
 
                 const deleteNode = async (id) => { await fetchApi(`/api/nodes?id=${id}`, { method: 'DELETE' }); refreshData(); };
@@ -1144,9 +1158,9 @@
                 const saveOsMap = () => { localStorage.setItem('kui_deploy_os', JSON.stringify(deployOsMap)); };
                 const generateCmd = (ip) => { const osType = deployOsMap[ip] || 'debian'; const scriptUrl = currentDomain ? currentDomain + "/vps/kui.sh" : "https://raw.githubusercontent.com/a62169722/KUI/main/vps/kui.sh"; if (osType === 'alpine') return `apk update && apk add curl && curl -sL ${scriptUrl} | sh -s -- --api "${currentDomain}" --ip "${ip}" --token "${authKey.value}"`; else return `apt-get update -y && apt-get install -y curl && bash <(curl -sL ${scriptUrl}) --api "${currentDomain}" --ip "${ip}" --token "${authKey.value}"`; };
 
-                const saveSiteTitle = async () => { if(!siteTitleInput.value) return alert('名称不能为空！'); await fetchApi('/api/settings', { method: 'POST', body: JSON.stringify({ site_title: siteTitleInput.value }) }); siteTitle.value = siteTitleInput.value; alert('✅ KUI 聚合面板名称保存成功！'); };
-                const updateUserPassword = async () => { if(!userNewPassword.value) return alert('请输入新密码'); await fetchApi('/api/user/password', { method: 'PUT', body: JSON.stringify({ password: userNewPassword.value }) }); alert('✅ 密码修改成功！请使用新密码重新登录。'); logout(); };
-                const resetMySubLink = async () => { if(confirm('🚨 危险操作！重置后系统将为您签发全新的 UUID 订阅令牌，原链接将【立即作废】！确定要继续重置吗？')) { await fetchApi('/api/user/sub_token', { method: 'PUT' }); alert('✅ 订阅令牌已刷新！'); refreshData(); } };
+                const saveSiteTitle = async () => { if(!siteTitleInput.value) return alert('鍚嶇О涓嶈兘涓虹┖锛?); await fetchApi('/api/settings', { method: 'POST', body: JSON.stringify({ site_title: siteTitleInput.value }) }); siteTitle.value = siteTitleInput.value; alert('鉁?KUI 鑱氬悎闈㈡澘鍚嶇О淇濆瓨鎴愬姛锛?); };
+                const updateUserPassword = async () => { if(!userNewPassword.value) return alert('璇疯緭鍏ユ柊瀵嗙爜'); await fetchApi('/api/user/password', { method: 'PUT', body: JSON.stringify({ password: userNewPassword.value }) }); alert('鉁?瀵嗙爜淇敼鎴愬姛锛佽浣跨敤鏂板瘑鐮侀噸鏂扮櫥褰曘€?); logout(); };
+                const resetMySubLink = async () => { if(confirm('馃毃 鍗遍櫓鎿嶄綔锛侀噸缃悗绯荤粺灏嗕负鎮ㄧ鍙戝叏鏂扮殑 UUID 璁㈤槄浠ょ墝锛屽師閾炬帴灏嗐€愮珛鍗充綔搴熴€戯紒纭畾瑕佺户缁噸缃悧锛?)) { await fetchApi('/api/user/sub_token', { method: 'PUT' }); alert('鉁?璁㈤槄浠ょ墝宸插埛鏂帮紒'); refreshData(); } };
                 
                 const generateSubLink = (ip='', format='') => { 
                     const tokenToUse = mySubToken.value || authKey.value; 
@@ -1162,15 +1176,15 @@
                     try {
                         const qr = new QRious({ value: text, size: 300, level: 'L', background: '#ffffff', foreground: '#1e293b' });
                         qrCodeImage.value = qr.toDataURL(); qrModalOpen.value = true;
-                    } catch (err) { alert('生成二维码失败！请检查链接长度或浏览器控制台。'); }
+                    } catch (err) { alert('鐢熸垚浜岀淮鐮佸け璐ワ紒璇锋鏌ラ摼鎺ラ暱搴︽垨娴忚鍣ㄦ帶鍒跺彴銆?); }
                 };
 
-                const saveProbeSettings = async () => { await fetchApi('/api/probe/admin/settings', { method: 'POST', body: JSON.stringify({settings: probeSys}) }); alert('✅ 探针大盘配置已生效！如果配置了TG参数已自动绑定Webhook。'); refreshData(); fetchProbeData(); };
+                const saveProbeSettings = async () => { await fetchApi('/api/probe/admin/settings', { method: 'POST', body: JSON.stringify({settings: probeSys}) }); alert('鉁?鎺㈤拡澶х洏閰嶇疆宸茬敓鏁堬紒濡傛灉閰嶇疆浜員G鍙傛暟宸茶嚜鍔ㄧ粦瀹歐ebhook銆?); refreshData(); fetchProbeData(); };
                 const openProbeEditModal = (s) => { editingProbeNode.value = JSON.parse(JSON.stringify(s)); if(!editingProbeNode.value.is_hidden) editingProbeNode.value.is_hidden = 'false'; if(!editingProbeNode.value.reset_day) editingProbeNode.value.reset_day = '1'; probeEditModalOpen.value = true; };
                 const saveProbeEdit = async () => { await fetchApi('/api/probe/admin/server', { method: 'PUT', body: JSON.stringify(editingProbeNode.value) }); probeEditModalOpen.value = false; refreshData(); fetchProbeData(); };
-                const deleteProbeNode = async (id) => { if (!confirm("⚠️ 确定要彻底删除该探针记录吗？如果机器还在运行 Agent，之后会自动复活！请确保先在面板的「服务器与节点」中删除此机器。")) return; await fetchApi(`/api/probe/admin/server?id=${id}`, { method: 'DELETE' }); refreshData(); fetchProbeData(); };
+                const deleteProbeNode = async (id) => { if (!confirm("鈿狅笍 纭畾瑕佸交搴曞垹闄よ鎺㈤拡璁板綍鍚楋紵濡傛灉鏈哄櫒杩樺湪杩愯 Agent锛屼箣鍚庝細鑷姩澶嶆椿锛佽纭繚鍏堝湪闈㈡澘鐨勩€屾湇鍔″櫒涓庤妭鐐广€嶄腑鍒犻櫎姝ゆ満鍣ㄣ€?)) return; await fetchApi(`/api/probe/admin/server?id=${id}`, { method: 'DELETE' }); refreshData(); fetchProbeData(); };
 
-                // --- 住宅IP代理控制器方法 ---
+                // --- 浣忓畢IP浠ｇ悊鎺у埗鍣ㄦ柟娉?---
 const proxyConfig = reactive({ country: 'JP', port: 7920 });
                 
 const toggleNodeProxy = async (ip, currentState) => {
@@ -1179,10 +1193,10 @@ const toggleNodeProxy = async (ip, currentState) => {
             method: 'POST',
             body: JSON.stringify({ ip, enable: !currentState })
         });
-        alert(`✅ 节点 ${ip} 代理已${currentState ? '关闭' : '开启'}！`);
+        alert(`鉁?鑺傜偣 ${ip} 浠ｇ悊宸?{currentState ? '鍏抽棴' : '寮€鍚?}锛乣);
         fetchProbeData();
     } catch (e) {
-        alert('❌ 代理开关切换失败: ' + e.message);
+        alert('鉂?浠ｇ悊寮€鍏冲垏鎹㈠け璐? ' + e.message);
     }
 };
                 
@@ -1197,9 +1211,9 @@ const saveProxyConfig = async () => {
             method: 'POST',
             body: JSON.stringify(config)
         });
-        alert('✅ 代理配置已下发！节点将在下次心跳时应用。');
+        alert('鉁?浠ｇ悊閰嶇疆宸蹭笅鍙戯紒鑺傜偣灏嗗湪涓嬫蹇冭烦鏃跺簲鐢ㄣ€?);
     } catch (e) {
-        alert('❌ 配置下发失败: ' + e.message);
+        alert('鉂?閰嶇疆涓嬪彂澶辫触: ' + e.message);
     }
 };
                 
@@ -1209,9 +1223,9 @@ const switchProxyIP = async () => {
             method: 'POST',
             body: JSON.stringify({ switch_trigger: Date.now() })
         });
-        alert('✅ 强制更换IP指令已发送！正在拉黑当前IP并重连...');
+        alert('鉁?寮哄埗鏇存崲IP鎸囦护宸插彂閫侊紒姝ｅ湪鎷夐粦褰撳墠IP骞堕噸杩?..');
     } catch (e) {
-        alert('❌ 指令发送失败: ' + e.message);
+        alert('鉂?鎸囦护鍙戦€佸け璐? ' + e.message);
     }
 };
 
