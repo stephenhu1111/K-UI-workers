@@ -377,7 +377,7 @@ export async function onRequest(context) {
     }
 
     // 🌟 住宅IP代理池：列出所有已上报的 VPS SOCKS5 出口（含在线状态）
-    if (action === "pool" && method === "GET") {
+    if (action === "proxy" && params.path[1] === "pool" && method === "GET") {
         if (!(await verifyAuth(request.headers.get("Authorization"), db, env))) return new Response("Unauthorized", { status: 401 });
         const { results } = await db.prepare("SELECT ip, socks_ip, port, user, pass, country, enabled, last_seen FROM proxy_servers").all();
         const now = Date.now();
@@ -386,7 +386,7 @@ export async function onRequest(context) {
     }
 
     // 🌟 住宅IP跨VPS互联（mesh）：返回可供本机链式转发的对端 SOCKS5 出口（排除自身、仅在线）
-    if (action === "mesh" && method === "GET") {
+    if (action === "proxy" && params.path[1] === "mesh" && method === "GET") {
         if (!(await verifyAuth(request.headers.get("Authorization"), db, env))) return new Response("Unauthorized", { status: 401 });
         const urlObj = new URL(request.url);
         const myIp = urlObj.searchParams.get("ip") || "";
