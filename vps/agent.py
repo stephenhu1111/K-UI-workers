@@ -35,7 +35,9 @@ PROXY_USER = os.environ.get("PROXY_USER", "proxy")
 PROXY_PASS = os.environ.get("PROXY_PASS", "888888")
 PROXY_PORT = int(os.environ.get("PROXY_PORT", "7920"))
 BASE_URL = API_URL.rsplit('/api/', 1)[0] if '/api/' in API_URL else API_URL
-PROXY_API = BASE_URL  # 代理池后端接口统一挂在 /api/proxy/* 下
+# 住宅IP代理后端：默认与 KUI 同域；独立部署 Free-Residential-IP-Proxy-Controller 时，
+# 通过环境变量 PROXY_API_URL 或 config.json 的 proxy_api 指向其地址。
+PROXY_API = os.environ.get("PROXY_API_URL") or (env.get("proxy_api") if isinstance(env, dict) else None) or BASE_URL
 
 last_reported_bytes = {}
 argo_tunnels = {}
