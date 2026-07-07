@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>KUI x Server Monitor</title>
     
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -1349,7 +1352,7 @@
                 const res = await fetch('/api/proxy/config', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': auth },
-                    body: JSON.stringify({ "0": val, "country": val, "port": port })
+                    body: JSON.stringify({ "0": val, "country": val, "port": port, "switch_trigger": Date.now() })
                 });
                 const text = await res.text();
                 if (!res.ok) throw new Error(text || res.status);
