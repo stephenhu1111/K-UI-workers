@@ -1353,7 +1353,15 @@
                 });
                 const text = await res.text();
                 if (!res.ok) throw new Error(text || res.status);
-                await pcLoadConfig();
+                // 直接从 POST 响应体更新输入字段，避免立即回读时 D1 最终一致性导致读到旧数据
+                try {
+                    const resp = JSON.parse(text);
+                    const saved = resp.slot_map || resp.proxy || {};
+                    const cfg0 = document.getElementById('slot-cfg-0');
+                    const portEl = document.getElementById('slot-port');
+                    if (cfg0) cfg0.value = String(saved["0"] || saved.country || val).toUpperCase();
+                    if (portEl) portEl.value = saved.port || port;
+                } catch(e) { console.warn('[pc] parse response failed', e); }
                 alert('🚀 策略及端口已云端同步！Agent 将在下一心跳周期应用。');
             } catch (e) { alert('❌ 下发失败: ' + e.message); }
         }
