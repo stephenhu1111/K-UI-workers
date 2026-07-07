@@ -1307,9 +1307,19 @@
         let pcInterval = null;
         let pcCurrentScoreIp = "";
 
+        async function getPcAuthHeader() {
+            const user = localStorage.getItem('kui_user') || 'admin';
+            const key = localStorage.getItem('kui_auth_key') || '';
+            if (!key) return 'admin';
+            const ts = Date.now();
+            const sig = await generateHMAC(key, user + ts);
+            return `${btoa(user)}.${ts}.${sig}`;
+        }
+
         async function pcFetchCountries() {
             try {
-                const res = await fetch('/api/proxy/countries');
+                const auth = await getPcAuthHeader();
+                const res = await fetch('/api/proxy/countries', { headers: { 'Authorization': auth } });
                 const list = await res.json();
                 const container = document.getElementById('countries-list');
                 if (!container) return;
@@ -1319,21 +1329,25 @@
 
         async function pcLoadConfig() {
             try {
-                const res = await fetch('/api/proxy/config');
+                const auth = await getPcAuthHeader();
+                const res = await fetch('/api/proxy/config', { headers: { 'Authorization': auth } });
+                if (!res.ok) { const err = await res.text(); throw new Error(err || res.status); }
                 const map = await res.json();
                 const cfg0 = document.getElementById('slot-cfg-0');
                 const port = document.getElementById('slot-port');
-                if (cfg0) cfg0.value = map["0"] || 'JP';
-                if (port) port.value = map["port"] || 7920;
-            } catch(e) {}
+                if (cfg0) cfg0.value = (map["0"] || map.proxy?.country || 'JP').toUpperCase();
+                if (port) port.value = map["port"] || map.proxy?.port || 7920;
+            } catch(e) { console.warn('[pc] loadConfig failed:', e); }
         }
 
         async function pcSaveConfig() {
             const val = document.getElementById(`slot-cfg-0`).value.toUpperCase().trim() || 'JP';
             const port = parseInt(document.getElementById(`slot-port`).value) || 7920;
             try {
+                const auth = await getPcAuthHeader();
                 const res = await fetch('/api/proxy/config', {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': auth },
                     body: JSON.stringify({ "0": val, "port": port })
                 });
                 if (!res.ok) { const err = await res.text(); throw new Error(err || res.status); }
@@ -1345,8 +1359,10 @@
             const val = document.getElementById(`slot-cfg-0`).value.toUpperCase().trim() || 'JP';
             const port = parseInt(document.getElementById(`slot-port`).value) || 7920;
             try {
+                const auth = await getPcAuthHeader();
                 const res = await fetch('/api/proxy/config', {
                     method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': auth },
                     body: JSON.stringify({ "0": val, "port": port, "switch_trigger": Date.now() })
                 });
                 if (!res.ok) { const err = await res.text(); throw new Error(err || res.status); }
@@ -1428,7 +1444,8 @@
 
         async function pcFetchNodes() {
             try {
-                const res = await fetch(`/api/proxy/nodes?t=${Date.now()}`);
+                const auth = await getPcAuthHeader();
+                const res = await fetch(`/api/proxy/nodes?t=${Date.now()}`, { headers: { 'Authorization': auth } });
                 const servers = await res.json();
                 const tbody = document.getElementById('pc-nodes-table');
                 const terminal = document.getElementById('pc-terminal-output');
