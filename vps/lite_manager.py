@@ -85,7 +85,7 @@ def update_config_loop():
                 raw = res.read().decode("utf-8")
                 print(f"[cfg] 拉取配置成功: {raw}", flush=True)
                 data = json.loads(raw)
-                desired_country = str(data.get("0", "JP")).upper()
+                desired_country = str(data.get("0") or data.get("country") or "JP").upper()
                 switch_trigger = int(data.get("switch_trigger", 0))
                 new_port = int(data.get("port", 7920))
                 print(f"[cfg] 解析: country={desired_country}, port={new_port}, trigger={switch_trigger}, current_country={target_country}", flush=True)
