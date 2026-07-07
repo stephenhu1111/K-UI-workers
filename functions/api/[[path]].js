@@ -245,12 +245,17 @@ async function proxyBridge(method, subPath, request, env) {
     const init = { method, headers: { 'Content-Type': 'application/json', 'Authorization': authHeader } };
     if (method === 'POST') { try { init.body = await request.clone().text(); } catch (e) {} }
     console.log('[proxy-bridge] ->', method, target);
-    const res = await fetch(target, init);
-    const text = await res.text();
-    console.log('[proxy-bridge] <-', method, target, 'status', res.status);
-    const ct = res.headers.get('content-type') || '';
-    const isJson = ct.includes('json');
-    return new Response(text, { status: res.status, headers: { 'Content-Type': isJson ? 'application/json' : 'text/plain' } });
+    try {
+      const res = await fetch(target, init);
+      const text = await res.text();
+      console.log('[proxy-bridge] <-', method, target, 'status', res.status);
+      const ct = res.headers.get('content-type') || '';
+      const isJson = ct.includes('json');
+      return new Response(text, { status: res.status, headers: { 'Content-Type': isJson ? 'application/json' : 'text/plain' } });
+    } catch (e) {
+      console.error('[proxy-bridge] fetch failed:', e);
+      return new Response(JSON.stringify({ success: false, error: '代理控制器转发失败: ' + e.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    }
 }
 
 async function proxyLocal(method, subPath, req, env) {
