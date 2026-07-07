@@ -1,11 +1,13 @@
 # -*- coding: utf-8 -*-
 import urllib.request
+import urllib.parse
 import json
 import os
 import time
 import subprocess
 import re
 import sys
+import base64
 from datetime import datetime
 
 # 强制系统编码锁
@@ -38,6 +40,15 @@ BASE_URL = API_URL.rsplit('/api/', 1)[0] if '/api/' in API_URL else API_URL
 # 住宅IP代理后端：默认与 KUI 同域；独立部署 Free-Residential-IP-Proxy-Controller 时，
 # 通过环境变量 PROXY_API_URL 或 config.json 的 proxy_api 指向其地址。
 PROXY_API = os.environ.get("PROXY_API_URL") or (env.get("proxy_api") if isinstance(env, dict) else None) or BASE_URL
+
+# 住宅IP代理控制器认证：优先使用控制器专用 Basic Auth，回退为 Bearer Token
+PROXY_CTRL_USER = os.environ.get("PROXY_CTRL_USER", env.get("proxy_ctrl_user", "") if isinstance(env, dict) else "")
+PROXY_CTRL_PASS = os.environ.get("PROXY_CTRL_PASS", env.get("proxy_ctrl_pass", "") if isinstance(env, dict) else "")
+
+def _proxy_ctrl_headers():
+    if PROXY_CTRL_USER and PROXY_CTRL_PASS:
+        return { 'User-Agent': 'Mozilla/5.0', 'Authorization': 'Basic ' + base64.b64encode(f"{PROXY_CTRL_USER}:{PROXY_CTRL_PASS}".encode()).decode() }
+    return HEADERS
 
 last_reported_bytes = {}
 argo_tunnels = {}
@@ -516,14 +527,33 @@ def _extract_mesh(proxy_cfg):
 
 def fetch_proxy_mesh(country="ANY"):
     # 拉取可供本机链式转发的对端 SOCKS5 出口（mesh 互联）
+    # 外部控制器对等节点列表：优先走 /api/proxies（返回 socks5:// 纯文本），本地按国家过滤
     try:
-        url = f"{PROXY_API}/api/proxy/mesh?ip={VPS_IP}"
         c = (country or "ANY").upper()
-        if c and c != "ANY":
-            url += f"&country={c}"
-        req = urllib.request.Request(url, headers=HEADERS)
-        data = json.loads(urllib.request.urlopen(req, timeout=10).read().decode('utf-8'))
-        return data if isinstance(data, list) else []
+        url = f"{PROXY_API}/api/proxies?ip={VPS_IP}"
+        req = urllib.request.Request(url, headers=_proxy_ctrl_headers())
+        raw = urllib.request.urlopen(req, timeout=10).read().decode('utf-8')
+        peers = []
+        for line in raw.splitlines():
+            line = line.strip()
+            if not line or not line.startswith('socks5://'):
+                continue
+            try:
+                parsed = urllib.parse.urlparse(line)
+                peer_country = ''
+                if parsed.fragment:
+                    peer_country = parsed.fragment.split('_')[0].upper()
+                if c and c != "ANY" and peer_country and peer_country != c:
+                    continue
+                host = parsed.hostname or ''
+                port = parsed.port or PROXY_PORT
+                user = parsed.username or PROXY_USER
+                pwd = parsed.password or PROXY_PASS
+                if host:
+                    peers.append({"socks_ip": host, "port": port, "user": user, "pass": pwd, "country": peer_country})
+            except Exception:
+                continue
+        return peers
     except Exception:
         return []
 
