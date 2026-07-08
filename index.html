@@ -387,6 +387,17 @@
                     <div class="w-full md:w-48"><label class="block text-xs font-bold text-slate-400 mb-2 pl-2">系统架构</label><select v-model="newVps.os" class="w-full bg-white/50 border border-white p-3 rounded-2xl transition hover:bg-white focus:bg-white outline-none font-medium text-slate-700"><option value="debian">Ubuntu / Debian</option><option value="alpine">Alpine Linux</option></select></div>
                     <button @click="addVps" class="bg-slate-800 text-white px-8 py-3.5 rounded-2xl font-bold hover:bg-black transition-all shadow-lg hover:scale-105 whitespace-nowrap">接入机器</button>
                 </div>
+                <div class="bg-white/60 backdrop-blur-xl p-4 md:p-6 rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 -mt-4">
+                    <div class="flex items-center gap-3">
+                        <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" v-model="newVps.socks5_enable" class="w-4 h-4 accent-indigo-600"> <span class="text-sm font-bold text-slate-700">启用 SOCKS5 出站代理</span></label>
+                    </div>
+                    <div v-if="newVps.socks5_enable" class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3">
+                        <div><label class="block text-xs font-bold text-slate-400 mb-1 pl-1">SOCKS5 地址</label><input v-model="newVps.socks5_addr" placeholder="1.2.3.4" class="w-full bg-white/50 border border-white p-2.5 rounded-xl transition hover:bg-white focus:bg-white text-sm"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 mb-1 pl-1">端口</label><input v-model="newVps.socks5_port" type="number" placeholder="1080" class="w-full bg-white/50 border border-white p-2.5 rounded-xl transition hover:bg-white focus:bg-white text-sm"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 mb-1 pl-1">用户名 (可选)</label><input v-model="newVps.socks5_user" placeholder="user" class="w-full bg-white/50 border border-white p-2.5 rounded-xl transition hover:bg-white focus:bg-white text-sm"></div>
+                        <div><label class="block text-xs font-bold text-slate-400 mb-1 pl-1">密码 (可选)</label><input v-model="newVps.socks5_pass" type="password" placeholder="pass" class="w-full bg-white/50 border border-white p-2.5 rounded-xl transition hover:bg-white focus:bg-white text-sm"></div>
+                    </div>
+                </div>
 
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
                     <div v-for="vps in servers" :key="vps.ip" class="bg-white/70 backdrop-blur-xl rounded-[2rem] border border-white shadow-xl shadow-slate-200/40 flex flex-col overflow-hidden transition-all hover:shadow-2xl">
@@ -434,6 +445,22 @@
                                 <div v-if="['XTLS-Reality', 'H2-Reality', 'gRPC-Reality'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" :list="'sni-rec-' + vps.ip" placeholder="伪装域名: 支持手填或下拉" class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"><datalist :id="'sni-rec-' + vps.ip"><option value="addons.mozilla.org"></option><option value="www.apple.com"></option><option value="gateway.icloud.com"></option><option value="itunes.apple.com"></option><option value="www.microsoft.com"></option></datalist></div>
                                 <div v-if="['TUIC', 'Hysteria2', 'Trojan', 'AnyTLS', 'Naive'].includes(newNodeParams[vps.ip].protocol)" class="bg-slate-100/50 p-3 rounded-xl mb-3"><input v-model="newNodeParams[vps.ip].sni" placeholder="SNI 域名 / 主机名" class="w-full bg-transparent outline-none text-sm font-medium text-slate-700"></div>
                                 <button @click="addNode(vps.ip)" class="w-full bg-gradient-to-r from-slate-800 to-black text-white py-3 rounded-xl font-bold shadow-lg transition-all hover:scale-[1.02]">添加单节点</button>
+                            </div>
+
+                            <div class="bg-slate-100/50 p-4 rounded-[1.5rem] border border-slate-200 mt-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <span :class="vps.socks5_enable == 1 ? 'bg-emerald-500' : 'bg-slate-300'" class="w-2 h-2 rounded-full inline-block"></span>
+                                        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">SOCKS5 出站代理</span>
+                                    </div>
+                                    <label class="flex items-center gap-1 text-sm"><input type="checkbox" :checked="vps.socks5_enable == 1" @change="updateVpsSocks5(vps.ip, 'socks5_enable', $event.target.checked ? 1 : 0); vps.socks5_enable = $event.target.checked ? 1 : 0" class="w-4 h-4 accent-indigo-600"> 启用</label>
+                                </div>
+                                <div v-if="vps.socks5_enable == 1" class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">地址</label><input :value="vps.socks5_addr" @change="updateVpsSocks5(vps.ip, 'socks5_addr', $event.target.value)" placeholder="SOCKS5 地址" class="w-full bg-white border p-2.5 rounded-xl text-sm outline-none"></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">端口</label><input :value="vps.socks5_port" @change="updateVpsSocks5(vps.ip, 'socks5_port', parseInt($event.target.value)||0)" type="number" placeholder="1080" class="w-full bg-white border p-2.5 rounded-xl text-sm outline-none"></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">用户名</label><input :value="vps.socks5_user" @change="updateVpsSocks5(vps.ip, 'socks5_user', $event.target.value)" placeholder="可选" class="w-full bg-white border p-2.5 rounded-xl text-sm outline-none"></div>
+                                    <div><label class="block text-[10px] font-bold text-slate-400 mb-1">密码</label><input :value="vps.socks5_pass" @change="updateVpsSocks5(vps.ip, 'socks5_pass', $event.target.value)" type="password" placeholder="可选" class="w-full bg-white border p-2.5 rounded-xl text-sm outline-none"></div>
+                                </div>
                             </div>
                         </div>
 
@@ -860,7 +887,7 @@
                 const currentDomain = window.location.origin;
 
                 const servers = ref([]); const nodes = ref([]); const users = ref([]);
-                const newVps = ref({ name: '', ip: '', os: 'debian' }); const newNodeParams = reactive({}); const newUser = reactive({ username: '', password: '', traffic_limit_gb: '', expire_date: '' });
+                const newVps = ref({ name: '', ip: '', os: 'debian', socks5_enable: false, socks5_addr: '', socks5_port: '', socks5_user: '', socks5_pass: '' }); const newNodeParams = reactive({}); const newUser = reactive({ username: '', password: '', traffic_limit_gb: '', expire_date: '' });
                 const mySubToken = ref(''); const siteTitle = ref(''); const siteTitleInput = ref(''); const userNewPassword = ref('');
                 const batchStartPort = reactive({}); const batchUser = reactive({}); 
                 
@@ -1158,8 +1185,9 @@
                 const toggleUser = async (username, status) => { await fetchApi('/api/users', { method: 'PUT', body: JSON.stringify({ username, enable: status }) }); refreshData(); };
                 const deleteUser = async (username) => { if(confirm('⚠️ 确定删除用户？节点将归还给管理员。')) { await fetchApi(`/api/users?username=${username}`, { method: 'DELETE' }); refreshData(); } };
                 const resetUserTraffic = async (username) => { await fetchApi('/api/users', { method: 'PUT', body: JSON.stringify({ username, reset_traffic: true }) }); refreshData(); };
-                const addVps = async () => { if(!newVps.value.ip || !newVps.value.name) return alert('请输入名称和IP'); deployOsMap[newVps.value.ip] = newVps.value.os; saveOsMap(); await fetchApi('/api/vps', { method: 'POST', body: JSON.stringify({ ip: newVps.value.ip, name: newVps.value.name }) }); newVps.value = { name: '', ip: '', os: 'debian' }; refreshData(); fetchProbeData();};
+                const addVps = async () => { if(!newVps.value.ip || !newVps.value.name) return alert('请输入名称和IP'); deployOsMap[newVps.value.ip] = newVps.value.os; saveOsMap(); await fetchApi('/api/vps', { method: 'POST', body: JSON.stringify({ ip: newVps.value.ip, name: newVps.value.name, socks5_enable: newVps.value.socks5_enable ? 1 : 0, socks5_addr: newVps.value.socks5_addr || '', socks5_port: parseInt(newVps.value.socks5_port) || 0, socks5_user: newVps.value.socks5_user || '', socks5_pass: newVps.value.socks5_pass || '' }) }); newVps.value = { name: '', ip: '', os: 'debian', socks5_enable: false, socks5_addr: '', socks5_port: '', socks5_user: '', socks5_pass: '' }; refreshData(); fetchProbeData();};
                 const deleteVps = async (ip) => { if(confirm('🧨 确定移除该机器？该机器相关的探针数据、节点数据将被完全清空！')) { await fetchApi(`/api/vps?ip=${ip}`, { method: 'DELETE' }); refreshData(); fetchProbeData();} };
+                const updateVpsSocks5 = async (ip, field, value) => { await fetchApi('/api/vps', { method: 'PUT', body: JSON.stringify({ ip, [field]: value }) }); };
 
                 const addNode = async (ip) => {
                     const p = newNodeParams[ip]; if(!p.port) return alert('请填写端口!');
@@ -1291,7 +1319,7 @@
                 return { 
                     isLoggedIn, showLoginModal, loginUser, password, currentUser, role, activeTab, 
                     servers, nodes, users, newVps, newNodeParams, newUser, 
-                    login, logout, refreshData, addUser, toggleUser, deleteUser, resetUserTraffic, addVps, deleteVps, addNode, deleteNode, toggleNode, resetTraffic, 
+                    login, logout, refreshData, addUser, toggleUser, deleteUser, resetUserTraffic, addVps, deleteVps, updateVpsSocks5, addNode, deleteNode, toggleNode, resetTraffic, 
                     getNodesByIp, getVpsName, formatBytes, formatDate, getExpireText, getTrafficPercent, getPingColor, isOnline, generateCmd, generateSubLink, copyCommand, 
                     globalOnline, globalTraffic, globalSpeedIn, globalSpeedOut, deployOsMap, saveOsMap, siteTitle, siteTitleInput, saveSiteTitle, userNewPassword, updateUserPassword, resetMySubLink, generateUUIDForNewUser, batchStartPort, batchUser, deployAllProtocols,
                     probeSys, publicProbeServers, filteredProbeServers, probeView, probeDetailId, probeDetail, setProbeView, openProbeDetail, probeGlobalOnline, probeGlobalOffline, probeGlobalSpeedIn, probeGlobalSpeedOut, probeGlobalNetRx, probeGlobalNetTx, filteredProbeGroups, probeCountryStats, currentFilter,
