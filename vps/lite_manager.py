@@ -467,9 +467,8 @@ def main():
     proxy_server.ACTIVE_BIND = tun_main.name
     
     try:
-        req = urllib.request.Request(f"{C2_URL}/api/config", headers=get_c2_headers())
-        with urllib.request.urlopen(req, timeout=10) as res:
-            data = json.loads(res.read().decode("utf-8"))
+        data = fetch_controller_config()
+        if data:
             PROXY_PORT = int(data.get("port", 7920))
     except: pass
 
