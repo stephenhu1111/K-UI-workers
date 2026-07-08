@@ -201,22 +201,33 @@ def proxy_client(client: socket.socket, address: tuple[str, int]) -> None:
         except: pass
 
 def start_proxy_server(host: str, port: int) -> None:
+    servers = []
     try:
-        # 支持双栈：判断地址中是否包含冒号以启用 AF_INET6
-        af = socket.AF_INET6 if ":" in host else socket.AF_INET
-        server = socket.socket(af, socket.SOCK_STREAM)
-        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # 强制解除 V6ONLY，允许一个 IPv6 Socket 同时接收 IPv4 和 IPv6 连接
-        if af == socket.AF_INET6:
-            try:
-                server.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
-            except:
-                pass
-        server.bind((host, port))
-        server.listen(256)
-    except Exception as e: return
+        server6 = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
+        server6.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server6.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
+        server6.bind(("::", port))
+        server6.listen(256)
+        servers.append(server6)
+    except Exception as e:
+        pass
+
+    try:
+        server4 = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server4.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server4.bind(("0.0.0.0", port))
+        server4.listen(256)
+        servers.append(server4)
+    except Exception as e:
+        pass
+
+    if not servers:
+        return
     while True:
         try:
-            client, address = server.accept()
-            threading.Thread(target=proxy_client, args=(client, address), daemon=True).start()
-        except: time.sleep(0.5)
+            readable, _, _ = select.select(servers, [], [], 1.0)
+            for server in readable:
+                client, address = server.accept()
+                threading.Thread(target=proxy_client, args=(client, address), daemon=True).start()
+        except Exception:
+            time.sleep(0.5)
