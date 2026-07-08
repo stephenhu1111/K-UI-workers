@@ -107,14 +107,17 @@ async function parseThirdPartySubscription(content) {
         let node = null;
         try {
             if (raw.startsWith('vmess://')) {
-                const jsonStr = base64ToUtf8(raw.slice(8));
-                const obj = JSON.parse(jsonStr);
                 node = {
-                    protocol: 'VMess', name: obj.ps || '', address: obj.add || obj.host || '', port: parseInt(obj.port) || 443,
-                    uuid: obj.id || obj.uuid || '', password: '', sni: obj.sni || obj.host || obj.add || '',
-                    public_key: obj.pbk || '', short_id: obj.sid || '', flow: obj.flow || '', network: (obj.net || 'tcp').toLowerCase(),
-                    host: obj.host || '', path: obj.path || '', extra: parseInt(obj.aid || 0) ? JSON.stringify({aid: parseInt(obj.aid)}) : '', enable: 1
+                    protocol: 'VMess', name: '', address: '', port: 443, uuid: '', password: '', sni: '',
+                    public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: raw, enable: 1
                 };
+                try {
+                    const jsonStr = base64ToUtf8(raw.slice(8));
+                    const obj = JSON.parse(jsonStr);
+                    node.name = obj.ps || ''; node.address = obj.add || obj.host || ''; node.port = parseInt(obj.port) || 443;
+                    node.uuid = obj.id || obj.uuid || ''; node.sni = obj.sni || obj.host || obj.add || '';
+                    node.network = (obj.net || 'tcp').toLowerCase(); node.host = obj.host || ''; node.path = obj.path || '';
+                } catch (e) {}
             } else if (raw.startsWith('vless://')) {
                 const url = new URL(raw);
                 node = {
@@ -855,13 +858,15 @@ export async function onRequest(context) {
                 const remark = encodeURIComponent(node.name || `TP_${node.protocol}_${node.port}`);
                 let link = "";
                 switch (node.protocol) {
-                    case "VMess": {
-                        const vmessObj = { "v": "2", "ps": (node.name || node.uuid || '').replace(/[^\x20-\x7E]/g, ''), "add": node.address, "port": node.port, "id": node.uuid, "aid": "0", "scy": "auto", "net": node.network||'tcp', "type": "none", "host": node.host||'', "path": node.path||'', "tls": "", "sni": (node.sni&&node.sni!==node.address) ? node.sni : '' };
-                        try { const e = JSON.parse(node.extra||'{}'); if (e.aid) vmessObj.aid = String(e.aid); } catch(ex) {}
-                        link = 'vmess://' + btoa(JSON.stringify(vmessObj)) + '#' + remark;
+                    case "VMess": link = node.extra && node.extra.startsWith('vmess://') ? node.extra + '#' + remark : ''; break;
+                    case "VLESS": {
+                        if (node.flow && (node.public_key || node.flow.includes('rprx'))) {
+                            link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&flow=${node.flow}&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key||''}&sid=${node.short_id||''}&type=${node.network||'tcp'}${node.path ? '&path=' + encodeURIComponent(node.path) : ''}#${remark}`;
+                        } else {
+                            link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&security=none&type=${node.network||'tcp'}${node.path ? '&path=' + encodeURIComponent(node.path) : ''}${node.host ? '&host=' + encodeURIComponent(node.host) : ''}#${remark}`;
+                        }
                         break;
                     }
-                    case "VLESS": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&security=none&type=${node.network || 'tcp'}${node.path ? '&path=' + encodeURIComponent(node.path) : ''}${node.host ? '&host=' + encodeURIComponent(node.host) : ''}#${remark}`; break;
                     case "XTLS-Reality": case "Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id || ""}&type=tcp#${remark}`; break;
                     case "Hysteria2": link = `hysteria2://${node.uuid}@${node.address}:${node.port}/?insecure=1&sni=${node.sni}&alpn=h3#${remark}`; break;
                     case "TUIC": link = `tuic://${node.uuid}:${node.password}@${node.address}:${node.port}?sni=${node.sni}&congestion_control=bbr&alpn=h3&allow_insecure=1#${remark}`; break;
@@ -879,9 +884,10 @@ export async function onRequest(context) {
                     if (node.protocol === "VMess") {
                         cProxy = `  - name: "${node.name || 'TP'}"\n    type: vmess\n    server: ${node.address}\n    port: ${node.port}\n    uuid: ${node.uuid}\n    alterId: 0\n    cipher: auto\n    udp: true${node.network && node.network !== 'tcp' ? `\n    network: ${node.network}${node.host ? `\n    ws-headers:\n      Host: ${node.host}` : ''}${node.path ? `\n    ws-path: ${node.path}` : ''}` : ''}`;
                     } else if (node.protocol.includes("VLESS") || node.protocol.includes("Reality")) {
+                        const isReality = (node.flow && node.flow.includes('rprx')) || node.protocol === "XTLS-Reality" || node.protocol === "Reality";
                         cProxy = `  - name: "${node.name || 'TP'}"\n    type: vless\n    server: ${node.address}\n    port: ${node.port}\n    uuid: ${node.uuid}\n    udp: true`;
-                        if (node.protocol === "XTLS-Reality" || node.protocol === "Reality") {
-                            cProxy += `\n    tls: true\n    flow: xtls-rprx-vision\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
+                        if (isReality) {
+                            cProxy += `\n    tls: true\n    flow: ${node.flow || 'xtls-rprx-vision'}\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    reality-opts:\n      public-key: ${node.public_key || ''}\n      short-id: ${node.short_id || ""}`;
                         } else if (node.protocol === "gRPC-Reality") {
                             cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
                         } else if (node.protocol === "H2-Reality") {
