@@ -71,22 +71,19 @@ if [ "$OS" = "alpine" ]; then
     fi
 
 echo "[4/6] ⚙️ 部署 Sing-box 代理核心..."
-if ! command -v sing-box >/dev/null 2>&1; then
-    ARCH=$(uname -m)
-    case "$ARCH" in
-        x86_64) SB_ARCH="amd64" ;;
-        aarch64) SB_ARCH="arm64" ;;
-        *) echo "不支持的 CPU 架构: $ARCH"; exit 1 ;;
-    esac
-    SB_VER=$(curl -s -A "$CURL_USER_AGENT" "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | grep '"tag_name":' | sed -E 's/.*"v([^"]+)".*/\1/')
-    [ -z "$SB_VER" ] && SB_VER=$(curl -sL -A "$CURL_USER_AGENT" "https://raw.githubusercontent.com/a62169722/KUI/main/docs/sing-box-version" 2>/dev/null)
-    [ -z "$SB_VER" ] && SB_VER="1.10.0"
-    curl -sLo sing-box.tar.gz -A "$CURL_USER_AGENT" "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/sing-box-${SB_VER}-linux-${SB_ARCH}.tar.gz"
-    tar -xzf sing-box.tar.gz
-    mv sing-box-${SB_VER}-linux-${SB_ARCH}/sing-box /usr/bin/
-    chmod +x /usr/bin/sing-box
-    rm -rf sing-box.tar.gz sing-box-${SB_VER}-linux-${SB_ARCH}
-fi
+rm -f /usr/bin/sing-box
+ARCH=$(uname -m)
+case "$ARCH" in
+    x86_64) SB_ARCH="amd64" ;;
+    aarch64) SB_ARCH="arm64" ;;
+    *) echo "不支持的 CPU 架构: $ARCH"; exit 1 ;;
+esac
+SB_VER="1.11.0"
+curl -sLo sing-box.tar.gz -A "$CURL_USER_AGENT" "https://github.com/SagerNet/sing-box/releases/download/v${SB_VER}/sing-box-${SB_VER}-linux-${SB_ARCH}.tar.gz"
+tar -xzf sing-box.tar.gz
+mv sing-box-${SB_VER}-linux-${SB_ARCH}/sing-box /usr/bin/
+chmod +x /usr/bin/sing-box
+rm -rf sing-box.tar.gz sing-box-${SB_VER}-linux-${SB_ARCH}
 
 echo "[4.5/6] ⚙️ 正在应用网络内核调优（BBR / QUIC / conntrack）..."
 if [ "$OS" = "alpine" ]; then
@@ -203,7 +200,6 @@ EOF
             systemctl daemon-reload
         fi
         systemctl enable sing-box
-        systemctl start sing-box
     fi
     systemctl start kui-agent
 fi
