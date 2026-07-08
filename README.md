@@ -19,7 +19,7 @@
 ### 🚀 KUI 极速节点网关
 
 - **一键 8合1 协议全家桶**：XTLS-Reality、Hysteria2、TUIC v5、Trojan、H2-Reality、gRPC-Reality、AnyTLS、Naive 防封锁协议极速下发
-- **Argo 隧道守护**：内置 Cloudflared 守护进程，支持 VLESS-Argo 全自动穿透
+- **Argo 隧道守护**：当 IP 被封时，可启用 Cloudflared 守护进程，支持 VLESS-Argo 全自动穿透恢复
 - **多用户体系**：完善的用户配额、到期时间管理，专属独立订阅链接，防泄漏重置机制
 - **流量结算**：自动统计用户/节点流量，精确到字节，支持重置与图表回溯
 - **第三方订阅**：支持导入外部订阅源，自动解析并混入本地节点池
@@ -251,7 +251,7 @@ K-UI-main/
 | gRPC-Reality | gRPC + Reality | 高隐蔽性 |
 | AnyTLS | 新一代抗封锁协议 | 最新抗封锁 |
 | Naive | 基于 HTTP/2 | 轻量简洁 |
-| VLESS-Argo | VLESS + Cloudflare Argo | 全自动隧道穿透 |
+| VLESS-Argo | VLESS + Cloudflare Argo | IP 被封时隧道穿透 |
 
 ### 探针监控指标
 
