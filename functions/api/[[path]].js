@@ -96,17 +96,18 @@ async function parseThirdPartySubscription(content) {
     }
     const lines = decoded.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
     const protocolCounts = {};
-    const debug = { totalLines: lines.length, matched: 0, hy2Found: false, hy2Count: 0, firstFewLines: [], hy2Line: '' };
+    const debug = { totalLines: lines.length, matched: 0, hy2Found: false, hy2Count: 0, firstFewLines: [], hy2Line: '', unmatchedPrefixes: {} };
     for (const raw of lines) {
         if (debug.firstFewLines.length < 5) debug.firstFewLines.push(raw.substring(0, 120));
-        if ((raw.startsWith('hysteria2://') || raw.startsWith('hy2://') || raw.startsWith('hysteria://')) && !debug.hy2Line) {
+        const rawLC = raw.toLowerCase();
+        if ((rawLC.startsWith('hysteria2://') || rawLC.startsWith('hy2://') || rawLC.startsWith('hysteria://')) && !debug.hy2Line) {
             debug.hy2Found = true;
             debug.hy2Count++;
             if (debug.hy2Count <= 1) debug.hy2Line = raw.substring(0, 160);
         }
         let node = null;
         try {
-            if (raw.startsWith('vmess://')) {
+            if (rawLC.startsWith('vmess://')) {
                 node = {
                     protocol: 'VMess', name: '', address: '', port: 443, uuid: '', password: '', sni: '',
                     public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: raw, enable: 1
@@ -118,7 +119,7 @@ async function parseThirdPartySubscription(content) {
                     node.uuid = obj.id || obj.uuid || ''; node.sni = obj.sni || obj.host || obj.add || '';
                     node.network = (obj.net || 'tcp').toLowerCase(); node.host = obj.host || ''; node.path = obj.path || '';
                 } catch (e) {}
-            } else if (raw.startsWith('vless://')) {
+            } else if (rawLC.startsWith('vless://')) {
                 const url = new URL(raw);
                 node = {
                     protocol: 'VLESS', name: safeHashDecode(url), address: url.hostname, port: parseInt(url.port) || 443,
@@ -127,31 +128,31 @@ async function parseThirdPartySubscription(content) {
                     flow: url.searchParams.get('flow') || '', network: (url.searchParams.get('type') || 'tcp').toLowerCase(),
                     host: url.searchParams.get('host') || '', path: url.searchParams.get('path') || '', extra: '', enable: 1
                 };
-            } else if (raw.startsWith('trojan://')) {
+            } else if (rawLC.startsWith('trojan://')) {
                 const url = new URL(raw);
                 node = {
                     protocol: 'Trojan', name: safeHashDecode(url), address: url.hostname, port: parseInt(url.port) || 443,
                     uuid: url.username, password: url.username, sni: url.searchParams.get('sni') || url.hostname,
                     public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: '', enable: 1
                 };
-            } else if (raw.startsWith('hysteria2://') || raw.startsWith('hy2://') || raw.startsWith('hysteria://')) {
+            } else if (rawLC.startsWith('hysteria2://') || rawLC.startsWith('hy2://') || rawLC.startsWith('hysteria://')) {
                 const parsed = parseHysteria2Link(raw);
                 if (parsed) node = parsed;
-            } else if (raw.startsWith('tuic://')) {
+            } else if (rawLC.startsWith('tuic://')) {
                 const url = new URL(raw);
                 node = {
                     protocol: 'TUIC', name: safeHashDecode(url), address: url.hostname, port: parseInt(url.port) || 443,
                     uuid: url.username, password: url.password || '', sni: url.searchParams.get('sni') || url.hostname,
                     public_key: '', short_id: '', flow: '', network: 'udp', host: '', path: '', extra: '', enable: 1
                 };
-            } else if (raw.startsWith('naive+https://') || raw.startsWith('naive://')) {
+            } else if (rawLC.startsWith('naive+https://') || rawLC.startsWith('naive://')) {
                 const url = new URL(raw);
                 node = {
                     protocol: 'Naive', name: safeHashDecode(url), address: url.hostname, port: parseInt(url.port) || 443,
                     uuid: url.username, password: url.password || '', sni: url.searchParams.get('sni') || url.hostname,
                     public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: '', enable: 1
                 };
-            } else if (raw.startsWith('ss://')) {
+            } else if (rawLC.startsWith('ss://')) {
                 const rest = raw.slice(5).replace(/#.*$/, '');
                 let host = '', port = 8388, password = '', method = '';
                 if (rest.includes('@')) {
@@ -180,7 +181,7 @@ async function parseThirdPartySubscription(content) {
                     protocol: 'Socks5', name: '', address: host, port: port, uuid: password, password, sni: host,
                     public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: JSON.stringify({method}), enable: 1
                 };
-            } else if (raw.startsWith('ssr://')) {
+            } else if (rawLC.startsWith('ssr://')) {
                 const b64 = raw.slice(6).replace(/#.*$/, '');
                 const decoded = base64ToUtf8(b64);
                 const base = decoded.split('/?')[0];
@@ -193,6 +194,10 @@ async function parseThirdPartySubscription(content) {
                         extra: JSON.stringify({method, protocol: bpms[4], obfs: bpms[5]}), enable: 1
                     };
                 }
+            } else {
+                const sep = raw.indexOf('://');
+                const pf = sep > 0 ? rawLC.substring(0, sep + 3) : rawLC.substring(0, Math.min(rawLC.length, 30));
+                debug.unmatchedPrefixes[pf] = (debug.unmatchedPrefixes[pf] || 0) + 1;
             }
         } catch (e) {
             node = null;
