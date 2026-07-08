@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 import os
+import ipaddress
 import select, socket, threading, urllib.parse, time, base64
 from typing import Any
 
@@ -32,24 +33,63 @@ def recv_exact(sock: socket.socket, size: int) -> bytes:
         data += chunk
     return data
 
+def parse_addr_port(raw: str):
+    if not raw:
+        return None
+    if raw.startswith('['):
+        idx = raw.find(']')
+        if idx == -1:
+            return None
+        host = raw[1:idx]
+        port_str = raw[idx + 2:] if len(raw) > idx + 1 and raw[idx + 1] == ':' else ''
+        port = parse_int(port_str) or 443
+        return host, port
+    if ':' in raw:
+        host, port_text = raw.rsplit(':', 1)
+        return host, parse_int(port_text) or 443
+    return raw, 443
+
 def create_connection(address: tuple[str, int], timeout: float = 20) -> socket.socket:
     global ACTIVE_BIND
     bind_interface = ACTIVE_BIND
     host, port = address
     err = None
-    for res in socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM):
+    if ':' in host:
+        try:
+            ipaddress.IPv6Address(host)
+            address = (host, port, 0, 0)
+        except (ipaddress.AddressValueError, ValueError):
+            pass
+    addrinfos = socket.getaddrinfo(host, port, 0, socket.SOCK_STREAM)
+    if not addrinfos:
+        raise OSError("getaddrinfo empty")
+
+    def sort_key(res):
         af, socktype, proto, canonname, sa = res
+        if bind_interface and af != socket.AF_INET:
+            return (1, 0)
+        return (0, 0)
+
+    addrinfos.sort(key=sort_key)
+
+    for af, socktype, proto, canonname, sa in addrinfos:
         sock = None
         try:
             sock = socket.socket(af, socktype, proto)
             sock.settimeout(timeout)
-            if bind_interface:
-                sock.setsockopt(socket.SOL_SOCKET, 25, bind_interface.encode('utf-8'))
+            if bind_interface and af == socket.AF_INET:
+                try:
+                    sock.setsockopt(socket.SOL_SOCKET, 25, bind_interface.encode('utf-8'))
+                except OSError:
+                    continue
+            elif bind_interface and af == socket.AF_INET6:
+                continue
             sock.connect(sa)
             return sock
         except OSError as e:
             err = e
-            if sock: sock.close()
+            if sock:
+                sock.close()
     raise err or OSError("getaddrinfo empty")
 
 def relay(left: socket.socket, right: socket.socket) -> None:
@@ -127,8 +167,11 @@ def http_client(client: socket.socket, first_byte: bytes) -> None:
 
         method, target, version = lines[0].split(" ", 2)
         if method.upper() == "CONNECT":
-            host, _, port_text = target.partition(":")
-            upstream = create_connection((host, parse_int(port_text) or 443), timeout=20)
+            parsed = parse_addr_port(target)
+            if not parsed:
+                return
+            host, port = parsed
+            upstream = create_connection((host, port), timeout=20)
             client.sendall(b"HTTP/1.1 200 Connection Established\r\n\r\n")
             if rest: upstream.sendall(rest)
             relay(client, upstream)
