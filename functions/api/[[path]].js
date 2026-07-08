@@ -8,6 +8,135 @@ async function sha256(text) {
     return Array.from(new Uint8Array(buffer)).map(b => b.toString(16).padStart(2, '0')).join('');
 }
 
+function base64ToUtf8(str) {
+    try {
+        const s = str.replace(/-/g, '+').replace(/_/g, '/');
+        const pad = s.length % 4;
+        const padded = pad ? s + '='.repeat(4 - pad) : s;
+        const binary = atob(padded);
+        const bytes = new Uint8Array(binary.length);
+        for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+        return new TextDecoder().decode(bytes);
+    } catch (e) {
+        return atob(str);
+    }
+}
+
+async function parseThirdPartySubscription(content) {
+    let nodes = [];
+    let decoded = content;
+    const trimmed = content.trim();
+    if (!trimmed.includes('://')) {
+        try {
+            decoded = base64ToUtf8(trimmed);
+        } catch (e) {
+            decoded = content;
+        }
+    }
+    const lines = decoded.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+    for (const raw of lines) {
+        let node = null;
+        try {
+            if (raw.startsWith('vmess://')) {
+                const jsonStr = base64ToUtf8(raw.slice(8));
+                const obj = JSON.parse(jsonStr);
+                node = {
+                    protocol: 'XTLS-Reality', name: obj.ps || '', address: obj.add || obj.host || '', port: parseInt(obj.port) || 443,
+                    uuid: obj.id || obj.uuid || '', password: '', sni: obj.sni || obj.host || obj.add || '',
+                    public_key: obj.pbk || '', short_id: obj.sid || '', flow: obj.flow || '', network: (obj.net || 'tcp').toLowerCase(),
+                    host: obj.host || '', path: obj.path || '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('vless://')) {
+                const url = new URL(raw);
+                node = {
+                    protocol: 'XTLS-Reality', name: decodeURIComponent(url.hash.slice(1) || ''), address: url.hostname, port: parseInt(url.port) || 443,
+                    uuid: url.username, password: '', sni: url.searchParams.get('sni') || url.hostname,
+                    public_key: url.searchParams.get('pbk') || '', short_id: url.searchParams.get('sid') || '',
+                    flow: url.searchParams.get('flow') || '', network: (url.searchParams.get('type') || 'tcp').toLowerCase(),
+                    host: url.searchParams.get('host') || '', path: url.searchParams.get('path') || '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('trojan://')) {
+                const url = new URL(raw);
+                node = {
+                    protocol: 'Trojan', name: decodeURIComponent(url.hash.slice(1) || ''), address: url.hostname, port: parseInt(url.port) || 443,
+                    uuid: url.username, password: url.username, sni: url.searchParams.get('sni') || url.hostname,
+                    public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('hysteria2://') || raw.startsWith('hy2://') || raw.startsWith('hysteria://')) {
+                const url = new URL(raw);
+                node = {
+                    protocol: 'Hysteria2', name: decodeURIComponent(url.hash.slice(1) || ''), address: url.hostname, port: parseInt(url.port) || 443,
+                    uuid: url.username, password: url.username, sni: url.searchParams.get('sni') || url.hostname,
+                    public_key: '', short_id: '', flow: '', network: 'udp', host: '', path: '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('tuic://')) {
+                const url = new URL(raw);
+                node = {
+                    protocol: 'TUIC', name: decodeURIComponent(url.hash.slice(1) || ''), address: url.hostname, port: parseInt(url.port) || 443,
+                    uuid: url.username, password: url.password || '', sni: url.searchParams.get('sni') || url.hostname,
+                    public_key: '', short_id: '', flow: '', network: 'udp', host: '', path: '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('naive+https://') || raw.startsWith('naive://')) {
+                const url = new URL(raw);
+                node = {
+                    protocol: 'Naive', name: decodeURIComponent(url.hash.slice(1) || ''), address: url.hostname, port: parseInt(url.port) || 443,
+                    uuid: url.username, password: url.password || '', sni: url.searchParams.get('sni') || url.hostname,
+                    public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: '', enable: 1
+                };
+            } else if (raw.startsWith('ss://')) {
+                const rest = raw.slice(5).replace(/#.*$/, '');
+                let host = '', port = 8388, password = '', method = '';
+                if (rest.includes('@')) {
+                    const [uinfo, saddr] = rest.split('@');
+                    const decodedUi = base64ToUtf8(uinfo);
+                    const [m, p] = decodedUi.split(':');
+                    method = m || 'aes-256-gcm';
+                    password = p || '';
+                    const [h, pStr] = saddr.split(':');
+                    host = h;
+                    port = parseInt(pStr) || 8388;
+                } else {
+                    const decodedRest = base64ToUtf8(rest);
+                    const parts = decodedRest.split('@');
+                    if (parts.length === 2) {
+                        const [uinfo2, saddr2] = parts;
+                        const [m, p] = uinfo2.split(':');
+                        method = m || 'aes-256-gcm';
+                        password = p || '';
+                        const [h, pStr] = saddr2.split(':');
+                        host = h;
+                        port = parseInt(pStr) || 8388;
+                    }
+                }
+                node = {
+                    protocol: 'Socks5', name: '', address: host, port: port, uuid: password, password, sni: host,
+                    public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '', extra: JSON.stringify({method}), enable: 1
+                };
+            } else if (raw.startsWith('ssr://')) {
+                const b64 = raw.slice(6).replace(/#.*$/, '');
+                const decoded = base64ToUtf8(b64);
+                const base = decoded.split('/?')[0];
+                const bpms = base.split(':');
+                if (bpms.length >= 5) {
+                    const method = bpms[0], password = base64ToUtf8(bpms[1]), host = bpms[2], port = bpms[3];
+                    node = {
+                        protocol: 'Socks5', name: '', address: host, port: parseInt(port) || 8388, uuid: password, password,
+                        sni: host, public_key: '', short_id: '', flow: '', network: 'tcp', host: '', path: '',
+                        extra: JSON.stringify({method, protocol: bpms[4], obfs: bpms[5]}), enable: 1
+                    };
+                }
+            }
+        } catch (e) {
+            continue;
+        }
+        if (node && node.address && node.port) {
+            node.id = crypto.randomUUID();
+            nodes.push(node);
+        }
+    }
+    return nodes;
+}
+
 async function ensureDbSchema(db) {
     const initQueries = [
         `CREATE TABLE IF NOT EXISTS servers (ip TEXT PRIMARY KEY, name TEXT NOT NULL, cpu INTEGER DEFAULT 0, mem REAL DEFAULT 0, last_report INTEGER DEFAULT 0, alert_sent INTEGER DEFAULT 0, disk INTEGER DEFAULT 0, load TEXT DEFAULT "", uptime TEXT DEFAULT "", net_in_speed INTEGER DEFAULT 0, net_out_speed INTEGER DEFAULT 0, tcp_conn INTEGER DEFAULT 0, udp_conn INTEGER DEFAULT 0)`,
@@ -57,6 +186,12 @@ async function ensureDbSchema(db) {
             }
         } catch(e) {}
     }
+
+    const tpsQueries = [
+        `CREATE TABLE IF NOT EXISTS third_party_subscriptions (id TEXT PRIMARY KEY, name TEXT NOT NULL, url TEXT NOT NULL, is_enable INTEGER DEFAULT 1, added_at INTEGER, last_fetched_at INTEGER)`,
+        `CREATE TABLE IF NOT EXISTS third_party_nodes (id TEXT PRIMARY KEY, subscription_id TEXT NOT NULL, name TEXT, protocol TEXT NOT NULL, address TEXT NOT NULL, port INTEGER NOT NULL, uuid TEXT, password TEXT, sni TEXT, public_key TEXT, short_id TEXT, flow TEXT, network TEXT, host TEXT, path TEXT, extra TEXT, enable INTEGER DEFAULT 1, created_at INTEGER, FOREIGN KEY(subscription_id) REFERENCES third_party_subscriptions(id) ON DELETE CASCADE)`
+    ];
+    for (let query of tpsQueries) { try { await db.prepare(query).run(); } catch (e) {} }
 }
 
 async function verifyAuth(authHeader, db, env) {
@@ -626,7 +761,7 @@ export async function onRequest(context) {
                     } else if (node.protocol === "gRPC-Reality") {
                         cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
                     } else if (node.protocol === "H2-Reality") {
-                        cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: h2\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
+                        cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      path: "/"\n      host: ${node.sni || node.vps_ip}`;
                     } else if (node.protocol === 'VLESS-Argo' && !node.sni.includes('等待')) {
                         cProxy += `\n    tls: true\n    servername: ${node.sni}\n    network: ws\n    ws-opts:\n      path: "/"\n      headers:\n        Host: ${node.sni}`;
                     }
@@ -644,6 +779,51 @@ export async function onRequest(context) {
                 }
             }
         }
+
+        // --- 第三方订阅节点整合进订阅 ---
+        try {
+            const { results: thNodes } = await db.prepare("SELECT * FROM third_party_nodes WHERE enable = 1").all();
+            for (const node of thNodes) {
+                const remark = encodeURIComponent(node.name || `TP_${node.protocol}_${node.port}`);
+                let link = "";
+                switch (node.protocol) {
+                    case "XTLS-Reality": case "Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id || ""}&type=tcp#${remark}`; break;
+                    case "Hysteria2": link = `hysteria2://${node.uuid}@${node.address}:${node.port}/?insecure=1&sni=${node.sni}&alpn=h3#${remark}`; break;
+                    case "TUIC": link = `tuic://${node.uuid}:${node.password}@${node.address}:${node.port}?sni=${node.sni}&congestion_control=bbr&alpn=h3&allow_insecure=1#${remark}`; break;
+                    case "Trojan": link = `trojan://${node.password}@${node.address}:${node.port}?security=tls&sni=${node.sni}&allowInsecure=1&type=tcp#${remark}`; break;
+                    case "H2-Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id || ""}&type=http#${remark}`; break;
+                    case "gRPC-Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id || ""}&type=grpc&serviceName=grpc#${remark}`; break;
+                    case "AnyTLS": link = `anytls://${node.password}@${node.address}:${node.port}?security=tls&sni=${node.sni}&insecure=1#${remark}`; break;
+                    case "Naive": link = `naive+https://${node.uuid}:${node.password}@${node.address}:${node.port}?security=tls&sni=${node.sni}#${remark}`; break;
+                    case "Socks5": link = `socks5://${btoa(`${node.uuid}:${node.password}`)}@${node.address}:${node.port}#${remark}`; break;
+                }
+                if (link) subLinks.push(link);
+
+                if (format === 'clash') {
+                    let cProxy = "";
+                    if (node.protocol.includes("VLESS") || node.protocol.includes("Reality")) {
+                        cProxy = `  - name: "${node.name || 'TP'}"\n    type: vless\n    server: ${node.address}\n    port: ${node.port}\n    uuid: ${node.uuid}\n    udp: true`;
+                        if (node.protocol === "XTLS-Reality" || node.protocol === "Reality") {
+                            cProxy += `\n    tls: true\n    flow: xtls-rprx-vision\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
+                        } else if (node.protocol === "gRPC-Reality") {
+                            cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
+                        } else if (node.protocol === "H2-Reality") {
+                            cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      host: ${node.sni || node.address}\n      path: "/"`;
+                        }
+                    } else if (node.protocol === "Trojan") {
+                        cProxy = `  - name: "${node.name || 'TP'}"\n    type: trojan\n    server: ${node.address}\n    port: ${node.port}\n    password: ${node.password}\n    udp: true\n    sni: ${node.sni}\n    skip-cert-verify: true`;
+                    } else if (node.protocol === "Hysteria2") {
+                        cProxy = `  - name: "${node.name || 'TP'}"\n    type: hysteria2\n    server: ${node.address}\n    port: ${node.port}\n    password: ${node.uuid}\n    sni: ${node.sni}\n    skip-cert-verify: true`;
+                    } else if (node.protocol === "TUIC") {
+                        cProxy = `  - name: "${node.name || 'TP'}"\n    type: tuic\n    server: ${node.address}\n    port: ${node.port}\n    uuid: ${node.uuid}\n    password: ${node.password}\n    sni: ${node.sni}\n    skip-cert-verify: true`;
+                    }
+                    if (cProxy) {
+                        clashProxies.push(cProxy);
+                        proxyNames.push(`"${node.name || 'TP'}"`);
+                    }
+                }
+            }
+        } catch (e) {}
 
         // --- 住宅IP代理 SOCKS5 节点整合进订阅 ---
         try {
@@ -760,6 +940,47 @@ rules:
             if (method === "POST") { const n = await request.json(); let nodeUser = n.username || currentUser; if (nodeUser === 'admin') nodeUser = currentUser; await db.prepare(`INSERT INTO nodes (id, uuid, vps_ip, protocol, port, sni, private_key, public_key, short_id, relay_type, target_ip, target_port, target_id, enable, traffic_used, traffic_limit, expire_time, username) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`).bind(n.id, n.uuid, n.vps_ip, n.protocol, n.port, n.sni||null, n.private_key||null, n.public_key||null, n.short_id||null, n.relay_type||null, n.target_ip||null, n.target_port||null, n.target_id||null, 1, 0, n.traffic_limit||0, n.expire_time||0, nodeUser).run(); return Response.json({ success: true }); }
             if (method === "PUT") { const { id, enable, reset_traffic } = await request.json(); if (reset_traffic) await db.prepare("UPDATE nodes SET traffic_used = 0 WHERE id = ?").bind(id).run(); else if (enable !== undefined) await db.prepare("UPDATE nodes SET enable = ? WHERE id = ?").bind(enable, id).run(); return Response.json({ success: true }); }
             if (method === "DELETE") { await db.prepare("DELETE FROM nodes WHERE id = ?").bind(new URL(request.url).searchParams.get("id")).run(); return Response.json({ success: true }); }
+        }
+
+        if (action === "thirdparty" && isAdmin) {
+            await ensureDbSchema(db);
+            if (method === "POST") {
+                const { name, url } = await request.json();
+                if (!url) return Response.json({ error: "请填写订阅链接" }, { status: 400 });
+                const id = crypto.randomUUID();
+                const now = Date.now();
+                await db.prepare("INSERT INTO third_party_subscriptions (id, name, url, added_at, last_fetched_at) VALUES (?, ?, ?, ?, ?)" ).bind(id, name || '第三方订阅', url, now, now).run();
+                let parsedCount = 0;
+                try {
+                    const res = await fetch(url, { headers: { 'User-Agent': 'KUI-TP-Client/1.0' } });
+                    const text = await res.text();
+                    const nodes = await parseThirdPartySubscription(text);
+                    if (nodes.length > 0) {
+                        const stmts = nodes.map(n => db.prepare("INSERT INTO third_party_nodes (id, subscription_id, name, protocol, address, port, uuid, password, sni, public_key, short_id, flow, network, host, path, extra, enable, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)").bind(n.id, id, n.name, n.protocol, n.address, n.port, n.uuid || '', n.password || '', n.sni || '', n.public_key || '', n.short_id || '', n.flow || '', n.network || '', n.host || '', n.path || '', n.extra || '', 1, now));
+                        await db.batch(stmts);
+                        parsedCount = nodes.length;
+                    }
+                } catch (e) { console.error("解析第三方订阅失败:", e); }
+                await db.prepare("UPDATE third_party_subscriptions SET last_fetched_at = ? WHERE id = ?").bind(Date.now(), id).run();
+                return Response.json({ success: true, id, parsedCount });
+            }
+            if (method === "GET") {
+                const { results } = await db.prepare("SELECT s.*, COUNT(n.id) as node_count FROM third_party_subscriptions s LEFT JOIN third_party_nodes n ON s.id = n.subscription_id GROUP BY s.id ORDER BY s.added_at DESC").all();
+                return Response.json(results || []);
+            }
+            if (method === "PUT") {
+                const { id, enable } = await request.json();
+                if (id) await db.prepare("UPDATE third_party_subscriptions SET is_enable = ? WHERE id = ?").bind(enable ? 1 : 0, id).run();
+                if (id) await db.prepare("UPDATE third_party_nodes SET enable = ? WHERE subscription_id = ?").bind(enable ? 1 : 0, id).run();
+                return Response.json({ success: true });
+            }
+            if (method === "DELETE") {
+                const subId = new URL(request.url).searchParams.get("id");
+                if (!subId) return Response.json({ error: "缺少订阅ID" }, { status: 400 });
+                await db.prepare("DELETE FROM third_party_subscriptions WHERE id = ?").bind(subId).run();
+                await db.prepare("DELETE FROM third_party_nodes WHERE subscription_id = ?").bind(subId).run();
+                return Response.json({ success: true });
+            }
         }
 
         return new Response("Not Found", { status: 404 });
