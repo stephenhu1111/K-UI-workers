@@ -87,7 +87,7 @@ function parseHysteria2Link(raw) {
         if (raw.startsWith('hy2://')) prefixLen = 5;
         else if (raw.startsWith('hysteria2://')) prefixLen = 12;
         else if (raw.startsWith('hysteria://')) prefixLen = 10;
-        let rest = raw.slice(prefixLen);
+        let rest = raw.slice(prefixLen).replace(/^\/+/, '');
         const hashIdx = rest.indexOf('#');
         let remark = '';
         if (hashIdx !== -1) { remark = rest.slice(hashIdx + 1); rest = rest.slice(0, hashIdx); }
