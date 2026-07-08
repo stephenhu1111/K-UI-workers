@@ -122,6 +122,29 @@ SYSCTL
     echo "[+] 内核参数配置完成"
 }
 
+setup_tun() {
+    echo "[1.5/4] 检查 TUN/TAP 设备..."
+    if [ -e /dev/net/tun ]; then
+        echo "[+] /dev/net/tun 已存在"
+        return
+    fi
+    echo "[*] /dev/net/tun 不存在，尝试创建..."
+    mkdir -p /dev/net
+    if modinfo tun >/dev/null 2>&1; then
+        modprobe tun 2>/dev/null || true
+    fi
+    if [ ! -e /dev/net/tun ]; then
+        echo "❌ 错误: /dev/net/tun 不存在，无法创建 TUN 设备。"
+        echo "    可能原因："
+        echo "    1. 内核未编译 tun 模块"
+        echo "    2. 容器/虚拟化环境未开放 /dev/net/tun"
+        echo "    3. 需要宿主机开启 TUN 设备"
+        echo "    请先在宿主机或控制台开启 TUN/TAP 支持后重试。"
+        exit 1
+    fi
+    echo "[+] TUN/TAP 设备已就绪"
+}
+
 download_agents() {
     echo "[2/4] 从安全中心拉取双活极速引擎..."
     mkdir -p /opt/proxy_lite/configs
@@ -230,6 +253,7 @@ main() {
 
     install_dependencies
     setup_sysctl
+    setup_tun
     download_agents
     install_service
 
