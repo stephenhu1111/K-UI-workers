@@ -19,10 +19,19 @@ function parseVLESSLink(raw) {
         const qIdx = rest.indexOf('?');
         let queryPart = '';
         if (qIdx !== -1) { queryPart = rest.slice(qIdx + 1); rest = rest.slice(0, qIdx); }
-        const atIdx = rest.lastIndexOf('@');
+
+        const findAt = (s) => {
+            const idx = s.lastIndexOf('@');
+            if (idx >= 0) return [idx, 1];
+            const encIdx = s.lastIndexOf('%40');
+            if (encIdx >= 0) return [encIdx, 3];
+            return [-1, 0];
+        };
+        const [atIdx, sepLen] = findAt(rest);
         if (atIdx < 0) return null;
-        const uuid = rest.slice(0, atIdx);
-        let hostPart = rest.slice(atIdx + 1);
+        const safeDecode = (s) => { try { return decodeURIComponent(s); } catch(e) { return s; } };
+        const uuid = safeDecode(rest.slice(0, atIdx));
+        let hostPart = rest.slice(atIdx + sepLen);
         let port = 443;
         if (hostPart.startsWith('[')) {
             const bracketEnd = hostPart.indexOf(']');
@@ -39,21 +48,21 @@ function parseVLESSLink(raw) {
             const colonIdx = hostPart.lastIndexOf(':');
             if (colonIdx > 0 && !hostPart.slice(0, colonIdx).includes(':')) {
                 const pStr = hostPart.slice(colonIdx + 1);
-                if (/^\d+$/.test(pStr)) {
+                if (/^\d+$/.test(safeDecode(pStr))) {
                     port = parseInt(pStr, 10);
                     hostWithoutPort = hostPart.slice(0, colonIdx);
                 }
             }
-            hostPart = hostWithoutPort;
+            hostPart = safeDecode(hostWithoutPort);
         }
         const params = new URLSearchParams(queryPart);
         const pbk = params.get('pbk') || '';
         const sid = params.get('sid') || '';
-        const sni = params.get('sni') || hostPart;
+        const sni = safeDecode(params.get('sni') || '') || hostPart;
         const flow = params.get('flow') || '';
         const network = params.get('type') || 'tcp';
-        const host = params.get('host') || '';
-        const path = params.get('path') || '';
+        const host = safeDecode(params.get('host') || '') || '';
+        const path = safeDecode(params.get('path') || '') || '';
         const name = hash ? (() => { try { return decodeURIComponent(hash); } catch(e) { return hash; } })() : '';
         const isReality = params.get('security') === 'reality' || !!pbk;
         const protocol = isReality ? 'Reality' : 'VLESS';
@@ -922,7 +931,7 @@ export async function onRequest(context) {
                         }
                         break;
                     }
-                    case "XTLS-Reality": case "Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&flow=xtls-rprx-vision&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id || ""}&type=tcp#${remark}`; break;
+                    case "XTLS-Reality": case "Reality": link = `vless://${node.uuid}@${node.address}:${node.port}?encryption=none&flow=${node.flow||'xtls-rprx-vision'}&security=reality&sni=${node.sni}&fp=chrome&pbk=${node.public_key}&sid=${node.short_id||""}&type=${node.network||'tcp'}${node.path?'&path='+encodeURIComponent(node.path):''}${node.host?'&host='+encodeURIComponent(node.host):''}#${remark}`; break;
                     case "Hysteria2": link = `hysteria2://${node.uuid}@${node.address}:${node.port}/?insecure=1&sni=${node.sni}&alpn=h3#${remark}`; break;
                     case "TUIC": link = `tuic://${node.uuid}:${node.password}@${node.address}:${node.port}?sni=${node.sni}&congestion_control=bbr&alpn=h3&allow_insecure=1#${remark}`; break;
                     case "Trojan": link = `trojan://${node.password}@${node.address}:${node.port}?security=tls&sni=${node.sni}&allowInsecure=1&type=tcp#${remark}`; break;
@@ -952,7 +961,22 @@ export async function onRequest(context) {
                         const isReality = (node.flow && node.flow.includes('rprx')) || node.protocol === "XTLS-Reality" || node.protocol === "Reality";
                         cProxy = `  - name: "${node.name || 'TP'}"\n    type: vless\n    server: ${node.address}\n    port: ${node.port}\n    uuid: ${node.uuid}\n    udp: true`;
                         if (isReality) {
-                            cProxy += `\n    tls: true\n    flow: ${node.flow || 'xtls-rprx-vision'}\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    reality-opts:\n      public-key: ${node.public_key || ''}\n      short-id: ${node.short_id || ""}`;
+                            cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    reality-opts:\n      public-key: ${node.public_key || ''}\n      short-id: ${node.short_id || ""}`;
+                            if (((node.protocol === "Reality" || node.protocol === "XTLS-Reality") && node.flow && node.flow.includes('rprx')) || node.protocol === "VLSS") {
+                                cProxy += `\n    flow: ${node.flow || 'xtls-rprx-vision'}`;
+                            }
+                            const net = node.network || 'tcp';
+                            if (net === 'grpc') {
+                                cProxy += `\n    network: grpc\n    grpc-opts:\n      grpc-service-name: ${node.extra?.serviceName || 'grpc'}`;
+                            } else if (net === 'http') {
+                                const path = node.path || '/';
+                                const hostHeader = node.host || node.sni || node.address;
+                                cProxy += `\n    network: h2\n    h2-opts:\n      host: ${hostHeader}\n      path: "${path}"`;
+                            } else if (net === 'ws') {
+                                const path = node.path || '/';
+                                const hostHeader = node.host || node.sni || node.address;
+                                cProxy += `\n    network: ws\n    ws-opts:\n      path: "${path}"\n      headers:\n        Host: ${hostHeader}`;
+                            }
                         } else if (node.protocol === "gRPC-Reality") {
                             cProxy += `\n    tls: true\n    servername: ${node.sni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
                         } else if (node.protocol === "H2-Reality") {
