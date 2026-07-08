@@ -320,12 +320,24 @@ def connect_node(tun: Tunnel, node: dict):
                 except: process.kill()
                 return
 
-            print(f"[*] {tun.name} 进行流媒体质检 (YouTube)...", flush=True)
-            res = subprocess.run(["curl", "-I", "-s", "-A", "Mozilla/5.0", "-m", "5", "--interface", tun.name, "https://www.youtube.com"], capture_output=True)
-            if res.returncode != 0:
-                print(f"[-] {tun.name} 节点出口无法连通 YouTube，拉黑更换: {node['ip']}", flush=True)
-                penalize_node(node["ip"], 10000)  # YT 连不通重罚
-                dead_ips.add(node["ip"])
+            print(f"[*] {tun.name} 流媒体连通性检测 (多端点)...", flush=True)
+            stream_ok = False
+            for stream_url in [
+                "https://www.youtube.com",
+                "https://www.gstatic.com/generate_204",
+                "https://cp.cloudflare.com/generate_204",
+                "https://www.google.com/robots.txt",
+            ]:
+                r = subprocess.run(["curl", "-o", "/dev/null", "-s", "-w", "%{http_code}", "-A", "Mozilla/5.0", "-m", "10", "--interface", tun.name, stream_url], capture_output=True, text=True)
+                code = r.stdout.strip()
+                if code and code != "000" and r.returncode == 0:
+                    print(f"[+] {tun.name} 端点可达 {stream_url} HTTP {code}", flush=True)
+                    stream_ok = True
+                    break
+                print(f"[*] {tun.name} 端点不可达 {stream_url} (code={code})", flush=True)
+            if not stream_ok:
+                print(f"[-] {tun.name} 所有流媒体端点均不可达，轻惩罚保留备用: {node['ip']}", flush=True)
+                penalize_node(node["ip"], 3000)
                 try: process.terminate(); process.wait(2)
                 except: process.kill()
                 return
