@@ -344,8 +344,7 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_ou
                     "key_path": key_path
                 },
                 "up_mbps": 1000,
-                "down_mbps": 1000,
-                "hop_interval": "30s"
+                "down_mbps": 1000
             })
         elif proto == "TUIC":
             singbox_config["inbounds"].append({
