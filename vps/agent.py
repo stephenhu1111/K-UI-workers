@@ -343,7 +343,7 @@ def process_argo_nodes(configs):
             del argo_tunnels[port]
     return argo_urls
 
-def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None):
+def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_outbound=None):
     singbox_config = {
         "log": {"level": "warn"},
         "inbounds": [],
@@ -464,6 +464,34 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None):
                 })
                 in_tag = f"in-{nid}"
                 singbox_config["route"]["rules"].append({"inbound": [in_tag], "outbound": out_tag})
+        except Exception:
+            pass
+
+    # --- SOCKS5 出站代理：将非转发节点流量统一路由到外部 SOCKS5 代理 ---
+    if socks5_outbound and socks5_outbound.get("enabled"):
+        try:
+            s5_addr = socks5_outbound.get("addr", "")
+            s5_port = int(socks5_outbound.get("port", 0))
+            if s5_addr and s5_port > 0:
+                s5_tag = "socks5-outbound"
+                s5_outbound = {"type": "socks", "tag": s5_tag, "server": s5_addr, "server_port": s5_port}
+                s5_user = socks5_outbound.get("user", "")
+                s5_pass = socks5_outbound.get("pass", "")
+                if s5_user:
+                    s5_outbound["username"] = str(s5_user)
+                if s5_pass:
+                    s5_outbound["password"] = str(s5_pass)
+                singbox_config["outbounds"].append(s5_outbound)
+                existing_routed = set()
+                for rule in singbox_config["route"]["rules"]:
+                    for ib in rule.get("inbound", []):
+                        existing_routed.add(ib)
+                for node in nodes:
+                    if node.get("protocol") == "dokodemo-door":
+                        continue
+                    in_tag = f"in-{node['id']}"
+                    if in_tag not in existing_routed:
+                        singbox_config["route"]["rules"].append({"inbound": [in_tag], "outbound": s5_tag})
         except Exception:
             pass
 
@@ -618,7 +646,8 @@ def fetch_and_apply_configs():
                 exit_ip = mesh.get("exit")
                 if exit_ip and exit_ip != "ANY":
                     peers = [p for p in peers if p.get("ip") == exit_ip]
-            build_singbox_config(nodes, current_proxy_config, peers, mesh)
+            socks5_outbound = data.get("socks5_outbound", {})
+            build_singbox_config(nodes, current_proxy_config, peers, mesh, socks5_outbound)
             return nodes
     except Exception:
         pass
