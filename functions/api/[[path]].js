@@ -912,7 +912,7 @@ export async function onRequest(context) {
                     } else if (node.protocol === "gRPC-Reality") {
                         cProxy += `\n    tls: true\n    servername: ${nodeSni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
                     } else if (node.protocol === "H2-Reality") {
-                        cProxy += `\n    tls: true\n    servername: ${nodeSni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      path: "/"\n      host: ${nodeSni || nodeIp}`;
+                        cProxy += `\n    tls: true\n    servername: ${nodeSni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      host:\n        - ${nodeSni || nodeIp}\n      path: "/"`;
                     } else if (node.protocol === 'VLESS-Argo' && !node.sni.includes('等待')) {
                         cProxy += `\n    tls: true\n    servername: ${nodeSni}\n    network: ws\n    ws-opts:\n      path: "/"\n      headers:\n        Host: ${nodeSni}`;
                     }
@@ -980,7 +980,7 @@ export async function onRequest(context) {
                             } else if (net === 'http') {
                                 const path = node.path || '/';
                                 const hostHeader = node.host || thirdSni || thirdIp;
-                                cProxy += `\n    network: h2\n    h2-opts:\n      host: ${hostHeader}\n      path: "${path}"`;
+                                cProxy += `\n    network: h2\n    h2-opts:\n      host:\n        - ${hostHeader}\n      path: "${path}"`;
                             } else if (net === 'ws') {
                                 const path = node.path || '/';
                                 const hostHeader = node.host || thirdSni || thirdIp;
@@ -988,8 +988,8 @@ export async function onRequest(context) {
                             }
                         } else if (node.protocol === "gRPC-Reality") {
                             cProxy += `\n    tls: true\n    servername: ${thirdSni}\n    client-fingerprint: chrome\n    network: grpc\n    grpc-opts:\n      grpc-service-name: grpc\n    reality-opts:\n      public-key: ${node.public_key}\n      short-id: ${node.short_id || ""}`;
-                        } else if (node.protocol === "H2-Reality") {
-                            cProxy += `\n    tls: true\n    servername: ${thirdSni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      host: ${thirdSni || thirdIp}\n      path: "/"`;
+                         } else if (node.protocol === "H2-Reality") {
+                             cProxy += `\n    tls: true\n    servername: ${thirdSni}\n    client-fingerprint: chrome\n    network: h2\n    h2-opts:\n      host:\n        - ${thirdSni || thirdIp}\n      path: "/"`;
                         }
                     } else if (node.protocol === "Trojan") {
                         cProxy = `  - name: "${node.name || 'TP'}"\n    type: trojan\n    server: ${thirdIp}\n    port: ${node.port}\n    password: ${node.password}\n    udp: true\n    sni: ${thirdSni}\n    skip-cert-verify: true`;
