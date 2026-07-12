@@ -682,6 +682,10 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_ou
             subprocess.run(["rc-service", "sing-box", "restart"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         else:
             subprocess.run(["systemctl", "restart", "sing-box"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    elif os.path.exists("/sbin/openrc-run") or os.path.exists("/etc/alpine-release"):
+        subprocess.run(["rc-service", "sing-box", "start"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        subprocess.run(["systemctl", "start", "sing-box"], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 def report_status(current_nodes, argo_urls):
     global last_reported_bytes, global_interval, dynamic_ping, pending_report_id, pending_report_bytes, pending_node_traffic

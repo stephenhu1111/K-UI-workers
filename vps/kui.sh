@@ -165,6 +165,9 @@ command="/usr/bin/python3"
 command_args="/opt/kui/agent.py"
 command_background="yes"
 pidfile="/run/kui-agent.pid"
+output_log="/var/log/kui-agent.log"
+error_log="/var/log/kui-agent.log"
+depend() { need net; }
 EOF
     cat > /etc/init.d/sing-box <<EOF
 #!/sbin/openrc-run
@@ -173,6 +176,9 @@ command="/usr/bin/sing-box"
 command_args="run -c /etc/sing-box/config.json"
 command_background="yes"
 pidfile="/run/sing-box.pid"
+output_log="/var/log/sing-box.log"
+error_log="/var/log/sing-box.log"
+depend() { need net; after kui-agent; }
 EOF
     chmod +x /etc/init.d/kui-agent /etc/init.d/sing-box
     rc-update add kui-agent default

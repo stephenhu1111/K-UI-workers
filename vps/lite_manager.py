@@ -580,7 +580,7 @@ def maintain_pool():
         time.sleep(2)
 
 def main():
-    global PROXY_PORT, tun_main
+    global PROXY_PORT, tun_main, target_country, last_switch_trigger
     if os.geteuid() != 0: return
     get_public_ip()
     setup_env()
@@ -592,6 +592,8 @@ def main():
         data = fetch_controller_config()
         if data:
             PROXY_PORT = int(data.get("port", 7920))
+            target_country = str(data.get("0") or data.get("country") or "JP").upper()
+            last_switch_trigger = int(data.get("switch_trigger", 0))
     except: pass
 
     print("========================================", flush=True)

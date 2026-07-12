@@ -257,7 +257,7 @@ stat -c '%a %n' /opt/kui/config.json /etc/sing-box/config.json
 # Alpine / OpenRC
 rc-service kui-agent status
 rc-service sing-box status
-logread | tail -n 50
+tail -n 50 /var/log/kui-agent.log
 stat -c '%a %n' /opt/kui/config.json /etc/sing-box/config.json
 ```
 
@@ -329,7 +329,7 @@ stat -c '%a %n' /etc/proxy-lite/env
 
 # Alpine / OpenRC
 rc-service proxy-lite status
-logread | tail -n 100
+tail -n 100 /var/log/proxy-lite.log
 ip -brief address show tun_main
 ip -brief address show tun_backup
 pgrep -a openvpn

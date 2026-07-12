@@ -147,8 +147,13 @@ setup_tun() {
     fi
     echo "[*] /dev/net/tun 不存在，尝试创建..."
     mkdir -p /dev/net
-    if modinfo tun >/dev/null 2>&1; then
-        modprobe tun 2>/dev/null || true
+    modprobe tun 2>/dev/null || true
+    if grep -Eq '(^|[[:space:]])tun$' /proc/misc 2>/dev/null; then
+        [ -e /dev/net/tun ] || mknod /dev/net/tun c 10 200
+        chmod 600 /dev/net/tun
+        if [ -f /etc/alpine-release ]; then
+            grep -qxF tun /etc/modules 2>/dev/null || echo tun >> /etc/modules
+        fi
     fi
     if [ ! -e /dev/net/tun ]; then
         echo "❌ 错误: /dev/net/tun 不存在，无法创建 TUN 设备。"
@@ -241,13 +246,24 @@ EOF
 
         cp /etc/proxy-lite/env /etc/conf.d/proxy-lite
         chmod 600 /etc/conf.d/proxy-lite
+        : > /var/log/proxy-lite.log
+        chmod 600 /var/log/proxy-lite.log
         cat > /etc/init.d/proxy-lite << 'EOF'
 #!/sbin/openrc-run
 name="proxy-lite"
 description="Proxy Core Engine (Active-Standby)"
 command="/usr/bin/python3"
 command_args="-u lite_manager.py"
+command_background="yes"
+pidfile="/run/proxy-lite.pid"
+output_log="/var/log/proxy-lite.log"
+error_log="/var/log/proxy-lite.log"
 directory="/opt/proxy_lite"
+start_pre() {
+    set -a
+    . /etc/proxy-lite/env
+    set +a
+}
 depend() {
     need net
     after firewall
@@ -258,7 +274,7 @@ EOF
         rc-service proxy-lite restart 2>/dev/null || true
         echo "[+] OpenRC 服务安装完成。"
         echo "    手动管理: rc-service proxy-lite start|stop|restart"
-        echo "    查看日志: tail -f /opt/proxy_lite/lite_manager.log 或 log_read /var/log/openrc/proxy-lite"
+        echo "    查看日志: tail -f /var/log/proxy-lite.log"
     else
         cat > /opt/proxy_lite/run.sh << 'EOF'
 #!/bin/sh
@@ -278,9 +294,11 @@ main() {
     if [ "$INIT_SYS" = "systemd" ]; then
         systemctl stop proxy-lite 2>/dev/null || true
         systemctl disable proxy-lite 2>/dev/null || true
+        systemctl stop sing-box 2>/dev/null || true
     elif [ "$INIT_SYS" = "openrc" ]; then
         rc-service proxy-lite stop 2>/dev/null || true
         rc-update del proxy-lite default >/dev/null 2>&1 || true
+        rc-service sing-box stop 2>/dev/null || true
     fi
     pkill -f "python3 -u lite_manager.py" >/dev/null 2>&1 || true
     pkill -f "openvpn.*tun_main|tun_backup" >/dev/null 2>&1 || true
@@ -291,13 +309,26 @@ main() {
     setup_tun
     download_agents
     install_service
+    if [ "$INIT_SYS" = "systemd" ]; then
+        systemctl restart kui-agent 2>/dev/null || true
+    elif [ "$INIT_SYS" = "openrc" ]; then
+        rc-service kui-agent restart 2>/dev/null || true
+    fi
 
     echo ""
     echo "=========================================================="
     echo "[+] 住宅IP代理引擎部署完成！"
     echo "=========================================================="
-    echo "    检查状态: systemctl status proxy-lite"
-    echo "    查看日志: journalctl -u proxy-lite -f"
+    if [ "$INIT_SYS" = "systemd" ]; then
+        echo "    检查状态: systemctl status proxy-lite"
+        echo "    查看日志: journalctl -u proxy-lite -f"
+    elif [ "$INIT_SYS" = "openrc" ]; then
+        echo "    检查状态: rc-service proxy-lite status"
+        echo "    查看日志: tail -f /var/log/proxy-lite.log"
+    else
+        echo "    检查进程: ps | grep lite_manager.py"
+        echo "    启动脚本: /opt/proxy_lite/run.sh"
+    fi
     echo "=========================================================="
 }
 
