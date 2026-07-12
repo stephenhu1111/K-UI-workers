@@ -1105,6 +1105,12 @@
                     }
                     return res;
                 };
+                window.kuiAdminAuthHeader = async () => {
+                    if (!authKey.value || !currentUser.value || role.value !== 'admin') return {};
+                    const timestamp = Date.now().toString();
+                    const signature = await generateHMAC(authKey.value, currentUser.value + timestamp);
+                    return { 'Authorization': `${btoa(currentUser.value)}.${timestamp}.${signature}` };
+                };
 
                 const login = async () => {
                     if (!loginUser.value) loginUser.value = 'admin';
@@ -1586,7 +1592,8 @@
             container.innerHTML = '<div class="col-span-full py-16 flex flex-col items-center justify-center text-slate-500"><svg class="animate-spin h-8 w-8 text-indigo-500 mb-4" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span>穿透请求中，正在构建原生质检报告...</span></div>';
 
             try {
-                const res = await fetch('/api/proxy/testisp-lookup/' + encodeURIComponent(ip));
+                const authHeaders = window.kuiAdminAuthHeader ? await window.kuiAdminAuthHeader() : {};
+                const res = await fetch('/api/proxy/testisp-lookup/' + encodeURIComponent(ip), { headers: authHeaders });
                 const rawText = await res.text();
 
                 let d;

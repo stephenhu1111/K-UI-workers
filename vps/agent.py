@@ -64,6 +64,24 @@ last_update_check = 0
 
 # 🌟 住宅IP代理配置缓存
 current_proxy_config = {}
+proxy_port_conflict = None
+
+def persist_agent_token(token):
+    global TOKEN, HEADERS
+    if not token or token == TOKEN:
+        return
+    updated = dict(env)
+    updated["token"] = token
+    temp_config = CONF_FILE + ".tmp"
+    with open(temp_config, "w", encoding="utf-8") as config_file:
+        json.dump(updated, config_file)
+        config_file.flush()
+        os.fsync(config_file.fileno())
+    os.chmod(temp_config, 0o600)
+    os.replace(temp_config, CONF_FILE)
+    TOKEN = token
+    HEADERS["Authorization"] = token
+    print("[agent] migrated to the server-specific agent token", flush=True)
 
 def check_for_update():
     global last_update_check
@@ -432,6 +450,7 @@ def build_chain_outbound(target, tag):
     return outbound
 
 def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_outbound=None):
+    global proxy_port_conflict
     singbox_config = {
         "log": {"level": "warn"},
         "inbounds": [],
@@ -508,6 +527,9 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_ou
                 except Exception:
                     pass
             if not port_in_use:
+                if proxy_port_conflict is not False:
+                    print(f"[agent] 端口 {proxy_port} 可用，由 sing-box 提供 SOCKS5 入站", flush=True)
+                proxy_port_conflict = False
                 try:
                     singbox_config["inbounds"].append({
                         "type": "socks",
@@ -521,7 +543,9 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_ou
                 except Exception:
                     pass
             else:
-                print(f"[agent] 端口 {proxy_port} 已被 proxy_server 占用，跳过 sing-box SOCKS5 注入", flush=True)
+                if proxy_port_conflict is not True:
+                    print(f"[agent] 端口 {proxy_port} 已由 proxy_server 提供服务，跳过重复 SOCKS5 入站", flush=True)
+                proxy_port_conflict = True
 
     try:
         for filename in os.listdir("/opt/kui/"):
@@ -637,6 +661,7 @@ def build_singbox_config(nodes, proxy_cfg=None, peers=None, mesh=None, socks5_ou
     old_config_str = ""
     if os.path.exists(SINGBOX_CONF_PATH):
         with open(SINGBOX_CONF_PATH, "r") as f: old_config_str = f.read()
+        os.chmod(SINGBOX_CONF_PATH, 0o600)
 
     if new_config_str != old_config_str:
         temp_config = SINGBOX_CONF_PATH + ".tmp"
@@ -789,6 +814,7 @@ def fetch_and_apply_configs():
         res = urllib.request.urlopen(urllib.request.Request(f"{API_URL}?ip={VPS_IP}", headers=HEADERS), timeout=10)
         data = json.loads(res.read().decode('utf-8'))
         if data.get("success"):
+            persist_agent_token(data.get("agent_token"))
             nodes = data.get("configs", [])
             global current_proxy_config
             pc = fetch_proxy_config()

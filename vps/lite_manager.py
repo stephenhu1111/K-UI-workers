@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-import base64, csv, os, subprocess, threading, time, urllib.request, json, ipaddress
+import base64, csv, os, subprocess, threading, time, urllib.request, urllib.parse, json, ipaddress, hashlib, sys, re
 from pathlib import Path
 import proxy_server
 
@@ -29,6 +29,7 @@ target_country = "JP"
 last_switch_trigger = 0
 last_config_sync = 0
 last_config_log = ""
+last_update_check = 0
 
 state_lock = threading.Lock()
 dead_ips = set()
@@ -90,6 +91,46 @@ def get_c2_headers():
         "Authorization": f"Basic {auth_ptr}"
     }
 
+def check_for_updates():
+    global last_update_check
+    now = time.time()
+    if not AGENT_TOKEN or now - last_update_check < 3600:
+        return
+    last_update_check = now
+    components = (("proxy-manager", Path(__file__).resolve()), ("proxy-server", (Path(__file__).parent / "proxy_server.py").resolve()))
+    staged = []
+    temporary_files = []
+    try:
+        for component, target in components:
+            url = f"{C2_URL.rstrip('/')}/api/agent_update?ip={urllib.parse.quote(VPS_IP, safe='')}&component={component}"
+            request = urllib.request.Request(url, headers=get_c2_headers())
+            with urllib.request.urlopen(request, timeout=20) as response:
+                source = response.read(2 * 1024 * 1024 + 1)
+                expected = response.headers.get("X-Agent-SHA256", "").lower()
+            if len(source) > 2 * 1024 * 1024 or not re.fullmatch(r"[0-9a-f]{64}", expected) or hashlib.sha256(source).hexdigest() != expected:
+                raise ValueError(f"{component} checksum mismatch")
+            if hashlib.sha256(target.read_bytes()).hexdigest() == expected:
+                continue
+            temporary = target.with_name(target.name + ".update.py")
+            temporary_files.append(temporary)
+            temporary.write_bytes(source)
+            temporary.chmod(0o700)
+            checked = subprocess.run([sys.executable, "-m", "py_compile", str(temporary)], capture_output=True, text=True)
+            if checked.returncode != 0:
+                raise ValueError(f"{component} compile failed: {checked.stderr.strip()}")
+            staged.append((temporary, target))
+        if not staged:
+            return
+        for temporary, target in staged:
+            os.replace(temporary, target)
+        print("[update] residential proxy components updated; restarting", flush=True)
+        os.execv(sys.executable, [sys.executable, str(Path(__file__).resolve())])
+    except Exception as error:
+        print(f"[update] update check failed: {error}", flush=True)
+        for temporary in temporary_files:
+            try: temporary.unlink(missing_ok=True)
+            except Exception: pass
+
 def get_recent_logs():
     try:
         res = subprocess.run(["journalctl", "-u", "proxy-lite.service", "-n", "30", "--no-pager", "--output=cat"], capture_output=True, text=True, errors="replace")
@@ -121,6 +162,7 @@ def update_config_loop():
     global target_country, last_switch_trigger, PROXY_PORT, tun_main, tun_backup, last_config_log
     while True:
         try:
+            check_for_updates()
             data = fetch_controller_config()
             if not data:
                 time.sleep(15)

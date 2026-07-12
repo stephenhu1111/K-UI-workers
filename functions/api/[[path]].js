@@ -779,7 +779,10 @@ export async function onRequest(context) {
         const ip = new URL(request.url).searchParams.get('ip');
         if (!(await verifyAgent(request.headers.get('Authorization'), ip, db, env))) return new Response('Unauthorized', { status: 401 });
         if (!env.ASSETS) return Response.json({ error: 'ASSETS binding is unavailable' }, { status: 503 });
-        const assetUrl = new URL('/vps/agent.py', request.url);
+        const component = new URL(request.url).searchParams.get('component') || 'agent';
+        const assets = { agent: '/vps/agent.py', 'proxy-manager': '/vps/lite_manager.py', 'proxy-server': '/vps/proxy_server.py' };
+        if (!assets[component]) return Response.json({ error: 'Unknown agent component' }, { status: 400 });
+        const assetUrl = new URL(assets[component], request.url);
         const asset = await env.ASSETS.fetch(assetUrl);
         if (!asset.ok) return new Response('Agent asset not found', { status: 404 });
         const source = await asset.arrayBuffer();
@@ -953,7 +956,8 @@ export async function onRequest(context) {
             const s = await db.prepare("SELECT socks5_enable, socks5_addr, socks5_port, socks5_user, socks5_pass, socks5_mode, socks5_domains FROM servers WHERE ip = ?").bind(ip).first();
             if (s && s.socks5_enable) socks5_outbound = { enabled: true, addr: s.socks5_addr, port: s.socks5_port, user: s.socks5_user, pass: s.socks5_pass, mode: s.socks5_mode || "global", domains: s.socks5_domains || "" };
         } catch (ex) {}
-        return Response.json({ success: true, configs: machineNodes, proxy: proxyCfg, socks5_outbound: socks5_outbound });
+        const serverAuth = await db.prepare("SELECT agent_token FROM servers WHERE ip = ?").bind(ip).first();
+        return Response.json({ success: true, configs: machineNodes, agent_token: serverAuth && serverAuth.agent_token || '', proxy: proxyCfg, socks5_outbound: socks5_outbound });
     }
 
     // 🌟 住宅IP代理：优先外部控制器 (PROXY_CTRL_URL)；未配置时回落到本地 D1 实现
