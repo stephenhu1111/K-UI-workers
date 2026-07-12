@@ -124,6 +124,7 @@ def check_for_updates():
         for temporary, target in staged:
             os.replace(temporary, target)
         print("[update] residential proxy components updated; restarting", flush=True)
+        subprocess.run(["pkill", "-f", "openvpn.*tun_main|tun_backup"], capture_output=True)
         os.execv(sys.executable, [sys.executable, str(Path(__file__).resolve())])
     except Exception as error:
         print(f"[update] update check failed: {error}", flush=True)
@@ -582,6 +583,7 @@ def maintain_pool():
 def main():
     global PROXY_PORT, tun_main, target_country, last_switch_trigger
     if os.geteuid() != 0: return
+    check_for_updates()
     get_public_ip()
     setup_env()
     subprocess.run(["pkill", "-f", "openvpn.*tun_main|tun_backup"], capture_output=True)
