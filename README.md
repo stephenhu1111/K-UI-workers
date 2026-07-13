@@ -1,21 +1,37 @@
+## 🌟 项目赞助商 (Sponsor)
+
+<p align="center">
+  <a href="https://derouter.ai?ref=0oZZ1HVc" target="_blank">
+    <b>DeRouter</b> — 基于区块链的纯正透明大模型 API 网关
+  </a>
+</p>
+
+**DeRouter** 通过区块链技术保证 Claude、GPT 官方 API 的**纯正与透明**，杜绝掺水降智问题。目前 Claude、GPT 在能力上仍领先国内大模型。
+
+- 🔗 官网：https://derouter.ai?ref=0oZZ1HVc
+- 🐦 Twitter：https://x.com/derouter_net
+- 💰 **有多余的 Claude 账号**：可托管到平台赚取收益
+- ⚡ **有 API 需求**：可使用其平台，价格为官方 API 的 **1-2 折**
+
+<br>
+
+<p align="center">
+  <a href="https://bytevirt.com/aff.php?aff=209" target="_blank">
+    <b>ByteVirt</b> — 始于方寸字节，成就无限云端
+  </a>
+</p>
+
+**ByteVirt** 是一家专注于高性价比云服务器的 VPS 厂商，提供稳定可靠的虚拟化云端主机，适合部署 KUI 节点、探针 bash 及各类自建服务。
+
+- 🔗 官网：https://bytevirt.com/aff.php?aff=209
+- 🖥️ **多地域机房**：可按需选择节点位置，满足代理与监控部署需求
+- ⚡ **稳定高速**：优质网络与虚拟化性能，保障服务长期在线
+
+---
+
 # KUI x Server Monitor Pro
 
 KUI 是一套由 Cloudflare Pages、Pages Functions、D1、独立 Realtime Worker、Durable Objects 和 VPS Agent 组成的代理聚合、服务器监控与住宅双隧道控制面板。
-
-## 项目赞助商
-
-<p align="center">
-  <a href="https://derouter.ai?ref=0oZZ1HVc"><b>DeRouter</b> - 透明大模型 API 网关</a>
-</p>
-
-- 官网：https://derouter.ai?ref=0oZZ1HVc
-- Twitter：https://x.com/derouter_net
-
-<p align="center">
-  <a href="https://bytevirt.com/aff.php?aff=209"><b>ByteVirt</b> - 高性价比云服务器</a>
-</p>
-
-- 官网：https://bytevirt.com/aff.php?aff=209
 
 ## 当前架构
 
