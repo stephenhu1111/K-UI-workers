@@ -1,639 +1,770 @@
-## 🌟 项目赞助商 (Sponsor)
+# KUI x Server Monitor Pro
+
+KUI 是一套由 Cloudflare Pages、Pages Functions、D1、独立 Realtime Worker、Durable Objects 和 VPS Agent 组成的代理聚合、服务器监控与住宅双隧道控制面板。
+
+## 项目赞助商
 
 <p align="center">
-  <a href="https://derouter.ai?ref=0oZZ1HVc" target="_blank">
-    <b>DeRouter</b> — 基于区块链的纯正透明大模型 API 网关
-  </a>
+  <a href="https://derouter.ai?ref=0oZZ1HVc"><b>DeRouter</b> - 透明大模型 API 网关</a>
 </p>
 
-**DeRouter** 通过区块链技术保证 Claude、GPT 官方 API 的**纯正与透明**，杜绝掺水降智问题。目前 Claude、GPT 在能力上仍领先国内大模型。
-
-- 🔗 官网：https://derouter.ai?ref=0oZZ1HVc
-- 🐦 Twitter：https://x.com/derouter_net
-- 💰 **有多余的 Claude 账号**：可托管到平台赚取收益
-- ⚡ **有 API 需求**：可使用其平台，价格为官方 API 的 **1-2 折**
-
-<br>
+- 官网：https://derouter.ai?ref=0oZZ1HVc
+- Twitter：https://x.com/derouter_net
 
 <p align="center">
-  <a href="https://bytevirt.com/aff.php?aff=209" target="_blank">
-    <b>ByteVirt</b> — 始于方寸字节，成就无限云端
-  </a>
+  <a href="https://bytevirt.com/aff.php?aff=209"><b>ByteVirt</b> - 高性价比云服务器</a>
 </p>
 
-**ByteVirt** 是一家专注于高性价比云服务器的 VPS 厂商，提供稳定可靠的虚拟化云端主机，适合部署 KUI 节点、探针 bash 及各类自建服务。
+- 官网：https://bytevirt.com/aff.php?aff=209
 
-- 🔗 官网：https://bytevirt.com/aff.php?aff=209
-- 🖥️ **多地域机房**：可按需选择节点位置，满足代理与监控部署需求
-- ⚡ **稳定高速**：优质网络与虚拟化性能，保障服务长期在线
+## 当前架构
 
----
+KUI 至少需要部署 Cloudflare Pages 和一个生产 D1。Realtime Worker 是推荐的第二个 Cloudflare 应用；启用后必须与 Pages 共享同一个生产 D1：
 
-DEV 修复情况
+| 组件 | 部署位置 | 必需 | 作用 |
+|---|---|---:|---|
+| KUI 主站 | Cloudflare Pages | 是 | 前端、Pages Functions、登录、配置、订阅、D1 持久化、Agent 安装与更新 |
+| Realtime Worker | Cloudflare Workers | 推荐 | Agent 与浏览器 WebSocket、Durable Objects、1-5 秒实时状态和配置通知 |
+| D1 | Cloudflare D1 | 是 | 用户、VPS、节点、配置、流量、探针和住宅状态的长期数据 |
+| Core Agent | VPS | 是 | 系统监控、sing-box 配置、流量统计和 Core WebSocket |
+| Proxy Manager | VPS | Full Deploy 默认安装 | OpenVPN 主备隧道、SOCKS5/HTTP 代理和 Proxy WebSocket |
 
-- 2026/07/12：完成独立 Agent Token、统一 Agent/住宅代理组件热更新、住宅代理双隧道恢复及安装链路加固
-- 2026/07/10：修复手机端网页显示异常
-- 2026/07/09：修复 Clash 订阅和 SOCKS5 输入回退
-
-# ⚡ KUI x Server Monitor Pro - 无服务器集群网关
-
-![Vue 3](https://img.shields.io/badge/Frontend-Vue%203-4FC08D?logo=vuedotjs)
-![Cloudflare Pages](https://img.shields.io/badge/Deploy-Cloudflare%20Pages-F38020?logo=cloudflare)
-![Python Agent](https://img.shields.io/badge/Agent-Python%203-3776AB?logo=python)
-![D1 Database](https://img.shields.io/badge/Database-Cloudflare%20D1-4285F4?logo=cloudflare)
-![License](https://img.shields.io/badge/License-MIT-blue)
-
-这是 **KUI 代理聚合面板**、**Server Monitor Pro 全景探针系统** 与**住宅 IP 双隧道代理**的一体化无服务器方案。
-
-仅需一次 Cloudflare Pages 部署，即可获得一个高可用、零服务器成本的集群管理中心。您只需在 VPS 上执行**一条 Full Deploy Command**，即可同时完成 **8合1代理矩阵、深度系统探针、住宅 IP ACTIVE/STANDBY 双隧道**的安装与守护。
-
-> 本项目基于 [CF-Server-Monitor-Pro](https://github.com/a63414262/CF-Server-Monitor-Pro) 及 [sing-box](https://github.com/SagerNet/sing-box) 加速实现，感谢开源社区的贡献。
-
----
-
-## ✨ 核心特性
-
-### 🚀 KUI 极速节点网关
-
-- **一键 8合1 协议全家桶**：XTLS-Reality、Hysteria2、TUIC v5、Trojan、H2-Reality、gRPC-Reality、AnyTLS、Naive 防封锁协议极速下发
-- **Argo 隧道守护**：当 IP 被封时，可启用 Cloudflared 守护进程，支持 VLESS-Argo 全自动穿透恢复
-- **多用户体系**：完善的用户配额、到期时间管理，专属独立订阅链接，防泄漏重置机制
-- **流量结算**：自动统计用户/节点流量，精确到字节，支持重置与图表回溯
-- **第三方订阅**：支持导入外部订阅源，自动解析并混入本地节点池
-
-### 📊 Server Monitor Pro 探针大盘
-
-- **深度数据抓取**：实时 CPU、内存、磁盘、负载，精准统计出入网实时网速与月度总流量
-- **国内四网延迟监控**：持续追踪服务器到 电信、联通、移动、字节跳动 的 24 小时 Ping 值趋势
-- **6 大沉浸式主题**：默认白、暗黑极客、新粗野主义、毛玻璃、赛博朋克，以及**完全自定义模式**
-- **地理拓扑**：自动识别机器归属地并在首页渲染高颜值全球 Leaflet 世界地图
-- **多视图切换**：支持卡片视图、表格视图、地图视图三种展示模式
-
-### 🌐 住宅 IP 代理控制器（双活引擎）
-
-- **主备双活调度**：内置主备双路隧道（`tun_main` / `tun_backup`），通道故障软开关秒切
-- **全量国家代码库**：预设 + 实时网络探测，提供最全面的目标锁定选择
-- **鉴权代理提取**：管理员或对应 VPS Agent 可通过 `/api/proxy/proxies` 获取可用代理
-- **安全热更新**：管理器与代理服务器每小时鉴权检查更新，验证 SHA256 和 Python 语法后原子替换
-
-### 🛠 终极单轨架构
-
-- **One Agent to Rule Them All**：彻底抛弃繁杂的 Bash 探针，由单一 Python 进程接管代理核心与系统监控，极大降低性能开销
-- **无缝融合后台**：SPA (单页应用) 架构，登录后直接在同一个控制台管理节点和探针展示信息，零割裂感
-- **TG 智能告警**：节点离线（超过2分钟）与恢复在线时，第一时间通过 Telegram 机器人推送告警
-
----
-
-## 📸 界面预览
-
-*(建议在此处添加您的真实截图)*
-
-- **探针大盘展示** — 多视图卡片/表格/地图
-- **单机 24H 趋势图** — CPU、内存、磁盘、网络、延迟
-- **KUI 控制台与极速下发** — 8合1协议矩阵一键部署
-- **住宅IP代理控制器** — 双活引擎调度界面
-
----
-
-## 🚀 详细部署指南
-
-本项目完全基于 Cloudflare Serverless 架构，您**不需要购买任何面板服务器**。
-
-### 前置要求
-
-- 一个 [GitHub](https://github.com) 账号
-- 一个 [Cloudflare](https://dash.cloudflare.com) 账号（免费版即可）
-- 一台或多台 VPS（Ubuntu 18-24 / Debian 10-13 / Alpine Linux）
-- 住宅代理需要 VPS 支持 `/dev/net/tun`；若供外部设备连接，应在云防火墙和系统防火墙中仅对可信来源开放代理端口（默认 `7920/TCP`）
-
----
-
-### 第一步：创建 Cloudflare D1 数据库
-
-1. 登录 [Cloudflare 控制台](https://dash.cloudflare.com)，进入 **Workers & Pages** → **D1 SQL 数据库**
-2. 点击 **Create database**，命名为 `kui-db`（或您喜欢的名字）
-3. 创建完成后，记下数据库名称，后续部署时需要用到
-
-> **注意**：您**不需要**手动建表！系统在首次访问时会自动完成 `servers`、`users`、`nodes`、`probe_servers` 等所有核心数据表的创建与迁移。
-
----
-
-### 第二步：Fork 仓库到个人 GitHub
-
-1. 打开本仓库页面
-2. 点击右上角 **Fork** 将仓库复制到您的个人 GitHub 账号下
-3. Fork 完成后，您将拥有一个完全相同的仓库副本
-
----
-
-### 第三步：部署到 Cloudflare Pages
-
-1. 登录 [Cloudflare Dashboard](https://dash.cloudflare.com)，进入 **Workers & Pages**
-2. 点击 **Create application** → **Pages** → **Connect to Git**
-3. 选择您刚刚 Fork 的仓库并授权
-4. **构建设置**：
-   - **Framework preset**：选择 `None`（无框架预设）
-   - **Build command**：留空（`None`）
-   - **Build output directory**：填写 `/`（根目录）
-   - **Root directory**：保持默认 `/`
-5. 生产分支选择本仓库当前使用的分支（例如 `dev`）；后续推送到该分支才会触发生产部署
-6. 点击 **Save and Deploy**
-7. 等待部署完成（通常 1-2 分钟），Cloudflare 会分配给您一个 `*.pages.dev` 域名
-
----
-
-### 第四步：绑定 D1 数据库与环境变量
-
-在 Pages 项目的 **Settings** → **Functions** → **D1 database bindings** 中：
-
-1. **D1 数据库绑定**：
-   - 变量名称：`DB`（**必须严格匹配**）
-   - 选择您在第一步中创建的数据库（如 `kui-db`）
-   - `ASSETS` 由 Cloudflare Pages 自动提供，用于鉴权安装器和 Agent 组件下载，不需要手工创建
-   - 请按本文使用 **Cloudflare Pages** 部署；若改成普通 Worker 且没有 `ASSETS` 绑定，`/api/agent_update` 会返回 `503`
-
-2. **环境变量**（Environment Variables）
-
-#### 基础必填
-
-| 变量名 | 说明 | 示例 | 必填 |
-|---|---|---|---|
-| `ADMIN_USERNAME` | KUI 后台管理员用户名 | `kui_admin` | ✅ |
-| `ADMIN_PASSWORD` | KUI 后台管理员强密码 | 随机 24 位以上 | ✅ |
-| `PROXY_USER` | Full Deploy 安装的住宅 SOCKS5 用户名 | `res_proxy` | ✅ |
-| `PROXY_PASS` | 住宅 SOCKS5 强密码 | 随机 32 位以上 | ✅ |
-| `REALTIME_URL` | Realtime Worker HTTPS 地址 | `https://kui-realtime.<账号>.workers.dev` | 推荐 |
-
-虽然 Worker 代码对管理员账号保留了兼容默认值，但生产部署必须显式设置管理员账号和密码。`PROXY_USER`、`PROXY_PASS` 没有可用默认值；缺少任意一个时，住宅代理 API 返回 `503`，SOCKS5 监听器拒绝连接。
-
-`REALTIME_URL` 未配置时系统继续使用原有 HTTP 模式。配置后，Core Agent、住宅代理和管理员浏览器优先使用 WebSocket；在线状态每 5 秒通过 WebSocket 上报并合并推送，关键连接、住宅通道和配置结果变化立即推送，通常 1-5 秒显示。WebSocket 健康时仅每 15 分钟执行一次 HTTP 状态持久化与配置权威校验；连接中断满 30 秒后自动恢复状态 90 秒、配置 300 秒的 HTTP fallback，WebSocket 恢复后自动停止高频 HTTP 请求。
-
-实时组件由 Full Deploy 自动安装和更新，无需在 VPS 单独部署 WebSocket 服务：
-
-- `vps/realtime_client.py`：Core Agent 和 Proxy Manager 共用的 WebSocket 客户端。
-- `vps/agent.py`：每 5 秒发送 Core 状态，HTTP 仅负责低频持久化和 fallback。
-- `vps/lite_manager.py`：每 5 秒发送住宅通道状态，ACTIVE/STANDBY、出口和配置结果变化立即上报。
-- `realtime/src/index.js`：`VpsPresence` 由 Core 的 5 秒状态驱动 Core+Proxy 合并快照，Proxy 主备/出口等关键变化额外立即推送；状态使用单行持久化，避免 Hibernation 导致重复写入和转发。
-- `index.html`：Dashboard WebSocket 健康时停止周期 Pages API 轮询，断线满 30 秒才恢复 HTTP。
-
-以 2 台同时运行 Core 和住宅代理的 VPS、1 个常开后台为例，WebSocket 消息和 DO-to-DO 合并请求折算后约 3.8 万次 Durable Objects 计费请求/天，单行状态写入约 6.9 万行/天，均低于免费版每日额度；健康态 Pages HTTP 主要为每 15 分钟一次的持久化和配置校验。
-
-### 部署 Realtime Worker
-
-Realtime Worker 位于 `realtime/`，包含每台 VPS 一个 `VpsPresence` Durable Object 和一个 `DashboardHub` Durable Object。部署前修改 `realtime/wrangler.jsonc` 中的账号、D1 和 `PAGES_ORIGIN`，确保 `DB` 与 Pages 绑定的是同一个 D1 数据库，然后执行：
-
-```bash
-npx wrangler secret put ADMIN_PASSWORD --config realtime/wrangler.jsonc
-npx wrangler deploy --config realtime/wrangler.jsonc
+```text
+                                   同一个生产 D1
+                               ┌──────────────────┐
+                               │                  │
+浏览器 ── HTTPS ── Pages ──────┤                  ├──── Realtime Worker
+  │              Functions     │                  │       │
+  │                            └──────────────────┘       │
+  └──────── Dashboard WebSocket ──────────────────────────┤
+                                                         │
+VPS Core Agent ───────────── Core WebSocket ───── VpsPresence DO
+VPS Proxy Manager ────────── Proxy WebSocket ───── VpsPresence DO
+                                                         │
+                                                   DashboardHub DO
 ```
 
-将部署结果中的 HTTPS 地址写入 Pages 的 `REALTIME_URL` 环境变量并重新部署 Pages。Realtime Worker 的 `ADMIN_USERNAME` 必须与 Pages 一致，`ADMIN_PASSWORD` 必须通过 secret 设置且与 Pages 一致。
+Pages + D1 可以单独运行 HTTP 模式；要获得 1-5 秒状态显示、实时配置通知和更低的 Pages 请求量，必须额外部署 Realtime Worker 和两个 Durable Object 类。
 
-可以在本地生成随机密码：
+## 功能概览
+
+- Vue 3 单页管理后台与公开探针大盘。
+- XTLS-Reality、Hysteria2、TUIC、Trojan、H2-Reality、gRPC-Reality、AnyTLS、Naive 和 VLESS-Argo 节点管理。
+- 多用户、配额、到期、订阅、第三方订阅和流量统计。
+- CPU、内存、磁盘、负载、网速、TCP/UDP 和多线路延迟监控。
+- 每台 VPS 独立 Agent Token，不使用管理员密码作为 Agent 凭据。
+- Core 与住宅代理每 5 秒通过 WebSocket 上报，通常 1-5 秒显示。
+- 配置保存后实时通知 VPS，配置结果返回面板。
+- Dashboard WebSocket 健康时停止周期 Pages API 轮询。
+- WebSocket 连续断开满 30 秒后自动切换 HTTP fallback，恢复后自动切回。
+- VPS Python 组件每小时通过鉴权端点检查更新，执行 SHA256、大小和语法校验后原子替换。
+
+## 支持范围
+
+### Cloudflare
+
+- Cloudflare Pages、Pages Functions 和 D1。
+- Cloudflare Workers 与 SQLite-backed Durable Objects，用于实时模式。
+- Production 和 Preview 环境相互独立，必须在 Production 环境配置绑定和变量。
+
+### VPS
+
+- Debian、Ubuntu、Alpine Linux。
+- `x86_64` 或 `aarch64`。
+- 必须使用 root 执行 Full Deploy。
+- 必须允许出站 HTTPS。
+- 住宅代理需要 `/dev/net/tun` 和服务商允许 TUN/TAP。
+- Full Deploy 不支持其他发行版；仓库中的部分脚本存在其他包管理器代码，不代表正式支持。
+
+## 安全准备
+
+部署前准备以下随机强凭据：
+
+| 名称 | 建议 |
+|---|---|
+| `ADMIN_USERNAME` | 不要使用 `admin` |
+| `ADMIN_PASSWORD` | 随机 24 位以上 |
+| `PROXY_USER` | 非常用用户名 |
+| `PROXY_PASS` | 随机 32 位以上 |
+| `CRON_SECRET` | 启用定时离线检查时使用，随机 32 位以上 |
+| `TG_WEBHOOK_SECRET` | 启用 Telegram Webhook 时使用，随机 32 位以上 |
+
+可以在本地生成随机值：
 
 ```bash
 openssl rand -base64 32
 ```
 
-#### Telegram 与定时告警（可选）
+重要说明：
 
-| 变量名 | 说明 | 使用条件 |
-|---|---|---|
-| `TG_BOT_TOKEN` | Telegram Bot Token | 启用 Telegram 通知时配置 |
-| `TG_CHAT_ID` | 接收告警的 Chat ID | 启用 Telegram 通知时配置 |
-| `TG_WEBHOOK_SECRET` | Telegram Webhook 来源校验密钥 | 启用 Telegram 命令管理时必须配置 |
-| `CRON_SECRET` | `/api/cron_check` 的 Bearer 密钥 | 使用外部 Cron 检查离线节点时配置 |
+- Pages 代码在缺少管理员变量时存在兼容默认值 `admin/admin`，生产环境必须显式设置 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD`。
+- `ADMIN_PASSWORD`、`PROXY_USER`、`PROXY_PASS`、`CRON_SECRET`、`TG_BOT_TOKEN`、`TG_CHAT_ID`、`TG_WEBHOOK_SECRET` 应使用 Cloudflare Secret。
+- Realtime Worker 的管理员用户名和密码必须与 Pages 完全相同。
+- Full Deploy Command 包含服务器专属 Agent Token，属于敏感信息，不要发到 Issue、聊天群或公开日志。
+- 住宅代理凭据可能由鉴权 API 返回给管理员或对应 Agent；泄露后应立即轮换 `PROXY_PASS`。
 
-#### 迁移开关（可选）
+# 完整部署指南
 
-| 变量名 | 说明 | 默认行为 |
-|---|---|---|
-| `LEGACY_AGENT_AUTH` | 仅在迁移历史 Agent 时临时设置为精确字符串 `true` | 默认关闭，最迟 2026-08-01 UTC 失效 |
+推荐严格按照以下顺序部署：
 
-新部署不要设置此变量。只有历史 Agent 已离线且无法立即执行 Full Deploy Command 时，才临时设置 `LEGACY_AGENT_AUTH=true` 并重新部署 Pages；迁移完成后立即删除该变量或设置为 `false`。
+1. Fork 仓库并确定 Pages 生产分支。
+2. 创建一个生产 D1。
+3. 部署 Pages，但先不要设置 `REALTIME_URL`。
+4. 给 Pages 绑定 D1、配置变量和 Secret，然后重新部署。
+5. 登录 Pages，触发 D1 schema 初始化并验证 HTTP 模式。
+6. 部署独立 Realtime Worker，绑定同一个 D1 和两个 Durable Object。
+7. 验证 Worker `/health`、凭据和来源配置。
+8. 在 Pages 设置 `REALTIME_URL`，重新部署 Pages，正式启用实时模式。
+9. 在面板添加 VPS，执行面板生成的 Full Deploy Command。
+10. 验证 Pages、Worker、DO、Core Agent、Proxy Manager 和 fallback。
 
-#### 住宅控制器无需配置
+## 第一步：Fork 仓库并选择生产分支
 
-KUI 已内置基于 D1 的住宅代理控制器。Full Deploy Command 会自动使用当前 KUI 域名完成配置、控制和心跳上报。正常部署只需配置上面的四个基础变量，不要添加任何 `PROXY_CTRL_*` 变量。
+1. Fork 本仓库到自己的 GitHub。
+2. 确认要用于生产的分支包含最新代码。
+3. 在 Cloudflare Pages 创建项目时，将该分支明确设置为 Production branch。
+4. 后续只有推送到 Production branch 并完成 Pages 生产发布，VPS 才能通过 `/api/agent_update` 获取新组件。
 
-代码中的 `PROXY_CTRL_*` 仅用于历史项目兼容和二次开发，不属于 KUI 标准部署流程。
+不要把 Preview 环境当作 Production。Preview 的变量、Secret 和 D1 绑定与 Production 独立。
 
-#### 不是 Pages 环境变量的选项
+## 第二步：创建生产 D1
 
-以下变量只用于 VPS 进程的高级手工配置，不要填到 Cloudflare Pages 后期待自动下发：
+1. 登录 Cloudflare Dashboard。
+2. 进入 **Storage & databases** → **D1 SQL database**。
+3. 创建数据库，例如 `kui-db`。
+4. 记录数据库名称和 database ID，部署 Realtime Worker 时还会使用。
 
-| 变量名 | 默认值 | 说明 |
-|---|---|---|
-| `PROXY_PORT` | `7920` | VPS 本地住宅代理监听端口 |
-| `PROXY_MAX_CONNECTIONS` | `256` | 单台 VPS 最大并发代理连接数，最低为 16 |
-| `PROXY_API_URL` | 当前 KUI 域名 | 统一 Agent 使用的住宅代理 API 根地址 |
-| `C2_API_PREFIX` | `/api/proxy` | 住宅管理器控制器 API 前缀 |
+KUI 没有独立 SQL migration 文件。Pages Functions 仅在会调用 `ensureDbSchema()` 的路由中执行幂等建表和兼容字段升级，例如 `/api/login`、`/api/probe/*`、`/api/report` 和 `/api/config`。
 
-> ⚠️ **安全提示**：不要使用 `admin/admin`、`proxy/888888` 等弱凭据。Deploy Command 包含服务器专属 Agent Token，只能在对应 VPS 的 root Shell 中执行，不要粘贴到公开 Issue、聊天群或命令日志。
+正常不需要手工建表。Pages 发布完成后，请执行一次管理员登录，确保 schema 初始化。仅访问静态首页不一定触发初始化。
 
-> Cloudflare 的 **Production** 与 **Preview** 环境变量、D1 绑定相互独立。若生产分支为 `dev`，请确认该分支对应环境已经绑定 `DB` 并配置上述变量。修改变量后必须重新部署。
+主要表包括：
 
----
-
-### 第五步：访问面板
-
-1. 重新触发一次部署（在 Pages 项目页面点击 **Retry deployment**），确保环境变量和 D1 绑定生效
-2. 访问您的 Pages 域名（如 `https://kui-monitor.pages.dev`）
-3. 点击右上角 **👨‍💻 KUI 管理面板** 或 **系统准入** 登录后台
-4. 使用您在第四步设置的账号密码登录
-
----
-
-## 💻 一条命令接入完整 VPS
-
-KUI、探针、sing-box 与住宅代理已经合并为一次部署流程，不需要再执行第二条住宅代理命令，也不需要配置额外的住宅控制器。
-
-### 1. 在面板添加服务器
-
-1. 登录后台，进入 **服务器与节点** 页面
-2. 在 **接入机器** 表单中，填写：
-   - **服务器别名**：如 `日本软银 01`
-   - **公网 IP**：您的 VPS 公网 IP
-   - **系统架构**：Debian/Ubuntu 选 `Linux`，Alpine 选 `Alpine`
-3. 点击 **接入机器**
-
-### 2. 获取部署指令
-
-在刚刚添加的服务器卡片底部，系统会签发服务器专属 `agent_token` 并生成 **Deploy Command**。不要自行使用管理员密码或管理员密码哈希替代该 Token。
-
-```bash
-bash <(curl -fsSL --ipv4 -H 'Authorization: 服务器专属AgentToken' 'https://您的域名/api/agent_update?ip=您的VPS_IP&component=full-installer') \
-  --api https://您的域名 \
-  --ip 您的VPS_IP \
-  --token 服务器专属AgentToken
+```text
+servers
+users
+nodes
+traffic_stats
+sys_config
+proxy_ctrl_servers
+server_logs
+proxy_slot_map
+report_receipts
+probe_settings
+probe_servers
+proxy_servers
+third_party_subscriptions
+third_party_nodes
 ```
 
-### 3. 执行安装
+运行时 DDL 是兼容机制，不是完整的事务化版本迁移系统。升级重要生产实例前建议备份 D1。
 
-使用 SSH 登录到您的 VPS，粘贴上述指令并回车：
+## 第三步：部署 Cloudflare Pages
 
-```bash
-# Ubuntu / Debian
-bash <(curl -fsSL --ipv4 -H 'Authorization: 服务器专属AgentToken' 'https://您的域名/api/agent_update?ip=1.2.3.4&component=full-installer') \
-  --api https://您的域名 \
-  --ip 1.2.3.4 \
-  --token 服务器专属AgentToken
+1. 进入 **Workers & Pages** → **Create application** → **Pages** → **Connect to Git**。
+2. 选择 Fork 后的仓库。
+3. 设置 Production branch。
+4. 构建设置：
 
-# Alpine Linux
-curl -fsSL --ipv4 -H 'Authorization: 服务器专属AgentToken' 'https://您的域名/api/agent_update?ip=1.2.3.4&component=full-installer' | sh -s -- \
-  --api https://您的域名 \
-  --ip 1.2.3.4 \
-  --token 服务器专属AgentToken
+| 设置 | 值 |
+|---|---|
+| Framework preset | `None` |
+| Build command | `exit 0` |
+| Build output directory | `.` |
+| Root directory | 留空；仅当仓库位于 monorepo 子目录时填写该子目录 |
+
+5. 点击部署。
+
+仓库根目录必须包含：
+
+```text
+index.html
+functions/api/[[path]].js
+vps/
+realtime/
 ```
 
-安装脚本会自动完成以下操作：
-- 清理历史残留进程
-- 保留并使用系统现有软件源
-- 安装底层网络依赖（Python3、curl、iptables 等）
-- 部署 Sing-box 代理核心
-- 初始化 KUI 工作目录
-- 下载并启动全能 Python Agent
-- 通过鉴权更新端点下载当前 Agent，并校验 SHA256 与 Python 语法
-- 注册为系统守护进程（systemd / OpenRC）
-- 鉴权下载住宅代理安装组件并校验 SHA256
-- 安装 OpenVPN 与 TUN 依赖
-- 部署 `proxy-lite`、`tun_main` 和 `tun_backup`
-- 自动处理 sing-box 与住宅代理的端口接管
+主应用必须部署为 Cloudflare Pages。`/api/agent_update` 使用 Pages 自动提供的 `ASSETS` 绑定读取当前发布的 VPS 组件；如果改成普通 Worker 且没有等价的 Assets 绑定，该接口会返回 `503`。
 
-### 4. 验证接入
+## 第四步：配置 Pages Production 环境
 
-安装完成后约 10-30 秒，您的机器会自动出现在全景探针大盘中并开始上报数据。
+进入 Pages 项目 **Settings**，确保以下配置作用于 Production。
 
-> 2026-08-01 前请在每台历史 VPS 上重新执行面板当前生成的部署命令，以将旧的管理员哈希凭据迁移为服务器专属 Agent Token。完成全部迁移后可立即设置 `LEGACY_AGENT_AUTH=false`。
+### D1 绑定
 
-> 新版 Agent 每小时通过鉴权端点检查更新，校验 SHA256 和 Python 语法后原子替换并自动重载。历史 Agent 本身没有热更新能力，因此仍需执行一次新版部署命令完成初始化。
+| 类型 | 绑定名 | 选择内容 |
+|---|---|---|
+| D1 database | `DB` | 第二步创建的生产 D1 |
 
-> Pages Functions 不直接运行 Cron Trigger。需要离线告警时，请让 Cloudflare Worker Cron、UptimeRobot 或其他定时服务每分钟 `POST https://您的域名/api/cron_check`，并携带请求头 `Authorization: Bearer <CRON_SECRET>`。
+绑定名必须严格为 `DB`。`ASSETS` 由 Pages 自动提供，不要手工创建。
 
-您可以直接在面板使用 **🚀 爆发下发** 功能，10 秒内部署 8 大节点阵列！
+### Pages 必填变量和 Secret
 
-### 5. Agent 服务验证
+| 名称 | 类型 | 说明 |
+|---|---|---|
+| `ADMIN_USERNAME` | Variable | 管理员用户名 |
+| `ADMIN_PASSWORD` | Secret | 管理员强密码 |
+| `PROXY_USER` | Secret | Full Deploy 住宅代理用户名 |
+| `PROXY_PASS` | Secret | Full Deploy 住宅代理密码 |
+
+如果不使用住宅代理，基础监控和节点功能可以不配置 `PROXY_USER`、`PROXY_PASS`；Full Deploy 的住宅阶段和相关 API 将无法正常工作。
+
+### Pages 可选变量
+
+| 名称 | 类型 | 说明 |
+|---|---|---|
+| `REALTIME_URL` | Variable | Realtime Worker HTTPS 来源；先留空，Worker 验证完成后再填写 |
+| `CRON_SECRET` | Secret | `/api/cron_check` 的 Bearer Secret |
+| `TG_BOT_TOKEN` | Secret | 服务端离线告警的 Telegram Token fallback |
+| `TG_CHAT_ID` | Variable/Secret | 服务端离线告警的 Telegram Chat ID fallback |
+| `TG_WEBHOOK_SECRET` | Secret | Telegram Webhook 请求校验 |
+| `LEGACY_AGENT_AUTH` | Variable | 仅旧 Agent 迁移时临时设置为精确字符串 `true` |
+
+修改绑定或变量后必须重新部署 Pages。
+
+### 标准部署不要配置的变量
+
+标准部署使用内置 D1 住宅控制器，不要设置：
+
+```text
+PROXY_CTRL_URL
+PROXY_CTRL_USER
+PROXY_CTRL_PASS
+PROXY_CTRL_TOKEN
+```
+
+代码仍支持外部控制器，但设置 `PROXY_CTRL_URL` 后，Pages 会桥接代理 API，Full Deploy 会检测到 external 模式并停止内置住宅安装。外部模式需要自行部署对应控制器和住宅组件。
+
+`PROXY_PORT` 也不是 Pages 的标准环境变量。内置控制器默认端口是 `7920`，应在住宅代理页面或鉴权 API 中修改。
+
+## 第五步：初始化和验证 Pages
+
+1. 重新部署 Pages。
+2. 打开 Pages 域名。
+3. 使用 `ADMIN_USERNAME` 和 `ADMIN_PASSWORD` 登录。
+4. 登录请求会触发 D1 schema 初始化。
+5. 检查以下项目：
+
+| 检查 | 预期 |
+|---|---|
+| `GET /` | 返回 KUI 页面 |
+| `GET /api/probe/public` | 返回 JSON，不出现缺少 `DB` |
+| 管理员登录 | 成功进入后台 |
+| 已登录后台发起的 `GET /api/data` | 返回 `servers`、`nodes`、`users`；无有效管理员鉴权会返回 `401` |
+| 添加 VPS | 生成服务器记录和独立 `agent_token` |
+
+Pages 没有单独 `/health` 接口。请使用实际页面、登录和 API 验证。
+
+此时不要急于设置 `REALTIME_URL`。先确保纯 HTTP 模式可登录、D1 正常、VPS 可以被添加。
+
+## 第六步：部署 Realtime Worker
+
+Realtime Worker 源码是：
+
+```text
+realtime/src/index.js
+```
+
+不要复制 `functions/api/[[path]].js`，它是 Pages Functions 后端，不是 Realtime Worker。
+
+### 一键部署 Worker + Durable Objects
+
+[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/a6216abcd/K-UI/tree/dev/realtime)
+
+点击按钮后，Cloudflare 会克隆 `realtime/` 独立模板并部署：
+
+- `kui-realtime` Worker。
+- `VpsPresence` SQLite-backed Durable Object。
+- `DashboardHub` SQLite-backed Durable Object。
+- `VPS_PRESENCE`、`DASHBOARD_HUB` 绑定。
+- `DB` D1 绑定。
+- `v1` Durable Object migration。
+
+> Deploy to Cloudflare 按钮只能部署 Worker 应用，不能同时部署 Pages。KUI Pages 仍需按前文单独连接 GitHub 部署。
+
+一键部署页面需要填写：
+
+| 项目 | 要求 |
+|---|---|
+| `ADMIN_USERNAME` | 与 Pages Production 完全相同 |
+| `ADMIN_PASSWORD` | 与 Pages Production 完全相同，作为 Secret |
+| `PAGES_ORIGIN` | Pages 完整来源，例如 `https://your-kui.pages.dev`，末尾无 `/` |
+| `DB` | 必须最终与 Pages Production 使用同一个 D1 |
+
+如果是一套全新 KUI，可以让一键部署流程创建 `kui-db`，然后在 Pages Production 中把这个数据库绑定为 `DB`。如果 Pages 已经有数据，一键部署后必须进入 Worker **Settings** → **Bindings**，确认 Worker 的 `DB` 指向 Pages 当前使用的同一个 D1 database ID；不要让 Worker 保留一个新的空 D1，否则 Agent 鉴权、Dashboard 快照和配置通知会失败。
+
+按钮完成后仍需执行：
+
+1. 访问 Worker `/health`。
+2. 核对 D1 database ID、管理员凭据和 `PAGES_ORIGIN`。
+3. 在 Pages Production 设置 `REALTIME_URL`。
+4. 重新部署 Pages。
+
+Realtime Worker 必须具备：
+
+| 类型 | 绑定/变量 | 值 |
+|---|---|---|
+| D1 | `DB` | 与 Pages 完全相同的生产 D1 |
+| Durable Object | `VPS_PRESENCE` | 类 `VpsPresence` |
+| Durable Object | `DASHBOARD_HUB` | 类 `DashboardHub` |
+| Variable | `ADMIN_USERNAME` | 与 Pages 完全相同 |
+| Variable | `PAGES_ORIGIN` | Pages 完整来源，例如 `https://your-kui.pages.dev`，末尾无 `/` |
+| Secret | `ADMIN_PASSWORD` | 与 Pages 完全相同 |
+
+两个 Durable Object 类必须是 SQLite-backed：
+
+```text
+VpsPresence
+DashboardHub
+```
+
+Cloudflare 中可能显示为：
+
+```text
+kui-realtime_VpsPresence
+kui-realtime_DashboardHub
+```
+
+这是正常命名空间前缀，不是重复 Worker，不要删除。
+
+### 本地首次部署：使用 Wrangler 注册 Durable Object
+
+不使用一键按钮时，首次本地部署必须让 Worker 代码、两个 Durable Object 绑定和 `new_sqlite_classes` migration 在同一次配置发布中生效。不要先在控制台手工创建同名但彼此独立的 Durable Object namespace。
+
+前提：
+
+- 本机已安装 Node.js LTS 和 npm。
+- 已执行 `npx wrangler login`，或配置了对目标账户有 Workers、D1 和 Durable Objects 权限的 `CLOUDFLARE_API_TOKEN`。
+- 建议记录 `npx wrangler --version`；本仓库没有锁定 Wrangler 版本。
+
+先修改 `realtime/wrangler.jsonc`：
+
+- `d1_databases[0].database_name`
+- `d1_databases[0].database_id`
+- `vars.ADMIN_USERNAME`
+- `vars.PAGES_ORIGIN`
+
+如果绑定现有 D1，先把真实 database ID 写入 `realtime/wrangler.jsonc`。如果希望 Wrangler 自动创建 `kui-db`，保留模板中省略 `database_id` 的写法。然后在仓库根目录执行首次部署，再写入 Secret：
+
+```bash
+npx wrangler deploy --config realtime/wrangler.jsonc
+npx wrangler secret put ADMIN_PASSWORD --config realtime/wrangler.jsonc
+```
+
+首次 `deploy` 会注册两个 Durable Object 类并创建/绑定资源；此时管理员鉴权暂不可用。`secret put` 会发布包含 `ADMIN_PASSWORD` 的新 Worker 版本，完成后再执行 `/health` 和 Dashboard ticket 验证。
+
+配置中已经声明首次 migration：
+
+```json
+{
+  "tag": "v1",
+  "new_sqlite_classes": ["VpsPresence", "DashboardHub"]
+}
+```
+
+已经上线后不要删除 `v1`，也不要用同一个 tag 注册未来的新类。新增 DO 类时必须追加新 migration tag。
+
+### 后续更新：Cloudflare 控制台复制代码
+
+首次 Wrangler migration 成功后，可以只使用 Cloudflare 网页更新同一个 Worker：
+
+1. 进入已部署的 `kui-realtime` Worker，不要另建同名 Worker。
+2. 打开 **Edit code**。
+3. 复制仓库 `realtime/src/index.js` 的完整内容，覆盖现有代码。
+4. 确认现有绑定仍为 `DB`、`VPS_PRESENCE`、`DASHBOARD_HUB`。
+5. 确认变量和 Secret 未被删除。
+6. 保存并部署。
+
+网页复制代码适用于不包含新 Durable Object 类或 migration 的普通代码更新。如果未来版本修改了 `realtime/wrangler.jsonc` 中的 migrations，必须再次使用 Wrangler 发布，不能只复制 JavaScript。
+
+### 验证 Realtime Worker
+
+访问：
+
+```text
+https://你的Worker域名/health
+```
+
+预期：
+
+```json
+{"ok":true,"service":"kui-realtime","version":1}
+```
+
+如果 `/health` 正常但 Dashboard WebSocket 失败，重点检查：
+
+- Worker 和 Pages 是否绑定同一个 D1 database ID。
+- Worker `ADMIN_USERNAME`、`ADMIN_PASSWORD` 是否与 Pages 完全相同。
+- `PAGES_ORIGIN` 是否与浏览器 `location.origin` 完全一致。
+- `VPS_PRESENCE`、`DASHBOARD_HUB` 绑定名是否拼写正确。
+- `VpsPresence`、`DashboardHub` 类是否已通过 SQLite migration 注册。
+
+## 第七步：启用实时模式
+
+Worker 验证完成后：
+
+1. 回到 Pages Production 环境变量。
+2. 设置：
+
+```text
+REALTIME_URL=https://你的Realtime-Worker域名
+```
+
+3. 不要在末尾添加 `/`。
+4. 重新部署 Pages。
+5. 刷新 KUI 后台。
+
+Pages `REALTIME_URL` 的优先级高于 D1 `sys_config.realtime_url`。推荐普通部署只使用 Pages 环境变量；如果同时设置，D1 值不能覆盖 Pages 变量。
+
+成功后浏览器会先请求 `/dashboard/ticket`，再建立 `/dashboard/ws`。VPS 在下一次配置同步或服务重启后建立 `/agent/ws`。
+
+## 第八步：添加 VPS 并执行 Full Deploy
+
+### 添加服务器
+
+1. 登录 KUI 后台。
+2. 进入 **服务器与节点**。
+3. 填写服务器别名、公网 IP 和系统类型。
+4. 点击接入机器。
+5. 刷新数据，确认服务器记录拥有独立 `agent_token`。
+6. 在服务器卡片中选择 Debian/Ubuntu 或 Alpine，复制面板生成的 Full Deploy Command。
+
+不要手工使用管理员密码或管理员密码哈希替代 Agent Token。
+
+### Full Deploy 前提
+
+- root Shell。
+- Debian、Ubuntu 或 Alpine。
+- `x86_64` 或 `aarch64`。
+- 出站 HTTPS 可用。
+- 住宅代理需要 TUN。
+- VPS 公网 IP 必须先在面板登记。
+
+### 命令结构示例
+
+请以面板生成命令为准。以下仅展示结构：
 
 ```bash
 # Debian / Ubuntu
-systemctl is-active kui-agent sing-box proxy-lite
-journalctl -u kui-agent -n 50 --no-pager
-stat -c '%a %n' /opt/kui/config.json /etc/sing-box/config.json
+apt-get update -y && apt-get install -y curl
+bash <(curl -fsSL -H "Authorization: <AGENT_TOKEN>" \
+  "https://<PAGES域名>/api/agent_update?ip=<VPS_IP>&component=full-installer") \
+  --api "https://<PAGES域名>" \
+  --ip "<VPS_IP>" \
+  --token "<AGENT_TOKEN>"
 
-# Alpine / OpenRC
+# Alpine
+apk update && apk add curl
+curl -fsSL -H "Authorization: <AGENT_TOKEN>" \
+  "https://<PAGES域名>/api/agent_update?ip=<VPS_IP>&component=full-installer" | \
+  sh -s -- --api "https://<PAGES域名>" --ip "<VPS_IP>" --token "<AGENT_TOKEN>"
+```
+
+Full Deploy 会：
+
+- 安装依赖。
+- 下载固定版本 sing-box 并校验 SHA256。
+- 安装 `/opt/kui/agent.py` 和 `/opt/kui/realtime_client.py`。
+- 写入权限为 `600` 的 Agent 配置。
+- 创建 `kui-agent` 和 `sing-box` 服务。
+- 通过鉴权端点下载住宅安装器。
+- 安装 `/opt/proxy_lite/lite_manager.py`、`proxy_server.py`、`realtime_client.py`。
+- 创建 `proxy-lite` 服务并管理 `tun_main`、`tun_backup`。
+
+Full Deploy 是系统级安装，会修改服务、网络配置和工作目录。请先在非关键 VPS 验证。
+
+## 第九步：生产验收
+
+### Debian/Ubuntu
+
+```bash
+systemctl is-active kui-agent sing-box proxy-lite
+journalctl -u kui-agent -n 100 --no-pager
+journalctl -u proxy-lite -n 100 --no-pager
+stat -c '%a %n' /opt/kui/config.json /etc/proxy-lite/env
+ss -tpn | grep python3
+```
+
+### Alpine
+
+```bash
 rc-service kui-agent status
 rc-service sing-box status
 rc-service proxy-lite status
-tail -n 50 /var/log/kui-agent.log
-stat -c '%a %n' /opt/kui/config.json /etc/sing-box/config.json
-```
-
-安装后等待 30-90 秒再执行验证。预期结果：三个服务均正常运行，配置文件权限为 `600`，服务器心跳持续更新，住宅代理页面最终显示 `2 / 2`。
-
----
-
-## 🌐 住宅 IP 双隧道代理
-
-住宅代理服务 `proxy-lite` 已由 Full Deploy Command 自动安装。它复用同一台服务器的专属 Agent Token，不使用管理员登录凭据。
-
-### 1. 配置 Pages 环境变量
-
-至少配置：
-
-```text
-PROXY_USER=自定义用户名
-PROXY_PASS=随机强密码
-```
-
-修改环境变量后重新部署 Pages，并确认后台 **住宅IP代理** 页面可以正常读取配置。
-
-如果要从其他设备访问 SOCKS5，请仅向可信客户端 IP 放行 `7920/TCP`。不要将代理端口无来源限制地暴露到公网。
-
-### 2. 一键部署
-
-在后台 **服务器与节点** 页面选择 Debian/Ubuntu 或 Alpine，复制该服务器卡片中的 **Full Deploy Command** 并执行。命令会同时安装统一 Agent 与住宅双隧道。
-
-### 3. 仅重装住宅代理（可选）
-
-正常部署不需要执行以下命令。仅当统一 Agent 正常、但需要单独修复或重装住宅代理组件时使用。以下修复命令同样通过鉴权 API 获取当前安装器，不使用可能被 CDN 缓存的公开静态脚本：
-
-```bash
-# Debian / Ubuntu
-bash <(curl -fsSL -H 'Authorization: 服务器专属AgentToken' 'https://您的域名/api/agent_update?ip=您的VPS_IP&component=proxy-installer') \
-  --domain https://您的域名 \
-  --controller https://您的域名 \
-  --ip 您的VPS_IP \
-  --token 服务器专属AgentToken
-
-# Alpine（住宅代理脚本需要 Bash，不能用 sh 执行）
-apk add --no-cache bash curl
-curl -fsSL --ipv4 -H 'Authorization: 服务器专属AgentToken' 'https://您的域名/api/agent_update?ip=您的VPS_IP&component=proxy-installer' | bash -s -- \
-  --domain https://您的域名 \
-  --controller https://您的域名 \
-  --ip 您的VPS_IP \
-  --token 服务器专属AgentToken
-```
-
-独立住宅修复脚本会：
-
-- 安装 OpenVPN、Python、iptables 和网络依赖
-- 在替换文件前停止旧 `proxy-lite`，避免 systemd 重启风暴
-- 通过 `/api/agent_update` 鉴权下载 `lite_manager.py` 和 `proxy_server.py`
-- 校验响应 SHA256 和 Python 语法
-- 将 Token 与本地凭据写入 `/etc/proxy-lite/env`，权限设为 `600`
-- 创建 systemd/OpenRC 服务
-- 建立 `tun_main`（ACTIVE）和 `tun_backup`（STANDBY）
-- 此后每小时自动检查住宅代理组件更新
-
-### 4. 验证双隧道
-
-```bash
-# Debian / Ubuntu
-systemctl is-active proxy-lite
-journalctl -u proxy-lite -n 100 --no-pager
-ip -brief address show tun_main
-ip -brief address show tun_backup
-pgrep -a openvpn
-stat -c '%a %n' /etc/proxy-lite/env
-
-# Alpine / OpenRC
-rc-service proxy-lite status
+tail -n 100 /var/log/kui-agent.log
 tail -n 100 /var/log/proxy-lite.log
-ip -brief address show tun_main
-ip -brief address show tun_backup
-pgrep -a openvpn
-stat -c '%a %n' /etc/proxy-lite/env
+stat -c '%a %n' /opt/kui/config.json /etc/proxy-lite/env
+ss -tpn | grep python3
 ```
 
-预期结果：
+启用住宅实时模式时，每台 VPS 正常应看到两条 Python 到 Cloudflare `443` 的长连接：Core 和 Proxy 各一条。
 
-- `proxy-lite` 为 `active`
-- `tun_main` 和 `tun_backup` 都有隧道地址
-- 存在两个 OpenVPN 进程
-- 后台 **活跃节点矩阵** 显示 `2 / 2`
-- 一条隧道标记为 ACTIVE，另一条标记为 STANDBY
-- `/etc/proxy-lite/env` 权限为 `600`
+住宅隧道依赖外部 VPNGate 节点、TUN、网络质量和启发式出口检查。安装成功不保证立即达到 `2 / 2`，也不保证所有出口一定是住宅网络。可能出现 `0 / 2`、`1 / 2` 或候选耗尽，应结合日志排查。
 
-### 5. 验证 SOCKS5 出口
+### 浏览器验收
 
-请使用 Pages 中配置的 `PROXY_USER/PROXY_PASS`：
+管理员后台打开时：
+
+- `/dashboard/ticket` 成功。
+- `/dashboard/ws` 显示 WebSocket 已连接。
+- CPU、内存、网速通常 1-5 秒更新。
+- 主备、出口、上下线和配置结果关键变化立即推送。
+- WebSocket 健康时不再周期请求 `/api/data`、`/api/probe/public`、`/api/proxy/nodes`、`/api/ui_ping`。
+- 断线持续满 30 秒后才启动 HTTP fallback。
+
+# 实时与 fallback 行为
+
+## WebSocket 健康
+
+| 通道 | 周期/行为 |
+|---|---|
+| Core 状态 | 每 5 秒发送到 `VpsPresence` |
+| Proxy 状态 | 每 5 秒发送到 `VpsPresence` |
+| Dashboard 普通快照 | Core 的 5 秒状态驱动 Core+Proxy 合并快照 |
+| Proxy 关键变化 | 在下一次 Proxy 状态帧中推送，通常不超过 5 秒；配置结果处理完成后立即推送 |
+| 配置通知和结果 | 立即推送 |
+| HTTP 状态持久化 | 约每 15 分钟 |
+| HTTP 配置权威校验 | 约每 15 分钟 |
+
+`VpsPresence` 在 Durable Object storage 中保存一个复合 `state` 对象，并使用 `boot_id` 和单调 `seq` 丢弃重复或乱序消息。DashboardHub 不重复持久化每个 VPS 快照。
+
+## WebSocket 断开
+
+Core 和 Proxy Agent 的 WebSocket 连续不可用时，前 30 秒只重连，不启动高频 HTTP。浏览器如果已经建立过健康 Dashboard WebSocket，断线后也等待 30 秒再恢复轮询；首次登录或首次启用一个不可用的 `REALTIME_URL` 时，登录流程会先启动 HTTP polling，因此不会等待 30 秒才获得数据。
+
+连续断开满 30 秒后：
+
+| 组件 | HTTP fallback |
+|---|---|
+| Core 状态 | 通常 90-300 秒，受服务端 interval 限制 |
+| Core 配置 | UI 活跃时可为 30 秒，否则 300 秒 |
+| Proxy 状态 | 90 秒 |
+| Proxy 配置 | 300 秒 |
+| 浏览器主数据 | 最低 15 秒 |
+| 浏览器探针 | 最低 30 秒 |
+| 浏览器 UI ping | 最低 60 秒 |
+
+WebSocket 恢复后自动停止高频 HTTP fallback。
+
+# 请求量和容量
+
+以下是按当前实现推算的工作负载，不是 Cloudflare 永久额度承诺。Cloudflare 定价和免费额度可能变化，请以目标账户 Dashboard 和官方文档为准。
+
+以 2 台 VPS、每台运行 Core + Proxy、1 个常开管理员后台为例：
+
+- Agent WebSocket 状态消息约 69,120 条/天。
+- 按 WebSocket 入站消息 20:1 的 Durable Objects 请求计费折算，Agent 入站约 3,456 个 DO 计费请求/天。
+- Core 驱动 Presence → Hub 更新约 34,560 个 DO 计费请求/天。
+- 加上 Dashboard 应用层 ping、配置结果、连接和重连后，稳态约 3.8-3.9 万个 DO 计费请求/天。
+- Presence 对 SQLite-backed DO storage 的单 `state` 写入稳态约 6.9 万行/天，配置结果和连接事件会增加少量写入。
+- 两台 VPS 的 Pages Functions 健康态请求约 1,200/天，主要来自 15 分钟 HTTP 检查点和每小时组件更新检查。
+- Dashboard WebSocket 健康时没有周期 Pages API 轮询，但仍存在 WebSocket 消息、本地 UI timer、显式用户操作和重连请求。
+
+Realtime Worker 的 `/notify`、snapshot 和 activity fan-out 当前最多处理前 100 台服务器。超过 100 台需要先修改分片和 fan-out 设计。
+
+# 住宅代理说明
+
+Full Deploy 默认安装住宅代理管理器。它通过公开 VPNGate OpenVPN 节点建立主备隧道，并使用外部检测结果做启发式筛选。
+
+### 端口和防火墙
+
+- 默认监听端口为 `7920/TCP`，实际端口以住宅页面配置为准。
+- 服务支持 SOCKS5 和 HTTP proxy。
+- 安装器不会替你安全开放公网代理端口。
+- 外部设备需要访问时，应同时配置云防火墙和系统防火墙，只允许可信来源 IP。
+- Core Agent 上报不需要入站端口，只需要出站 HTTPS；住宅代理对外服务是另一回事。
+
+### 验证代理出口
+
+请替换为真实凭据和实际端口，避免将长期密码留在共享 Shell history：
 
 ```bash
+export PROXY_USER='你的用户名'
+export PROXY_PASS='你的密码'
+export PROXY_PORT='7920'
+
 curl -fsS --max-time 30 \
-  --proxy socks5h://127.0.0.1:7920 \
-  --proxy-user 'PROXY_USER:PROXY_PASS' \
+  --proxy "socks5h://127.0.0.1:${PROXY_PORT}" \
+  --proxy-user "${PROXY_USER}:${PROXY_PASS}" \
   https://api.ipify.org
 ```
 
-返回值应是当前 ACTIVE 住宅出口 IP，而不是 VPS 本机公网 IP。
+返回值应是当前 ACTIVE 隧道出口，而不是 VPS 本机公网 IP。
 
----
+### 单独修复住宅组件
 
-## 🔄 历史 VPS 迁移与热更新
-
-### 从旧管理员哈希 Token 迁移
-
-旧版部署曾将管理员密码哈希写入 `/opt/kui/config.json`。新版会在兼容窗口内恢复上报，并在成功拉取配置后自动将服务器专属 Token 原子写回本地。
-
-仍建议在 **2026-08-01 前**逐台重新执行面板当前生成的 Full Deploy Command。它会同时迁移统一 Agent 和住宅代理。全部迁移后设置：
-
-```text
-LEGACY_AGENT_AUTH=false
-```
-
-### 热更新范围
-
-以下组件每小时通过鉴权端点检查更新：
-
-- `/opt/kui/agent.py`
-- `/opt/proxy_lite/lite_manager.py`
-- `/opt/proxy_lite/proxy_server.py`
-
-更新流程为：下载到临时文件 → 限制体积 → 校验 SHA256 → `py_compile` → 原子替换 → 进程自重载。Full Deploy Command、安装器和热更新均通过鉴权 `/api/agent_update` 获取当前部署资产，不依赖可能被 CDN 缓存的公开 `/vps/*` 路径。
-
----
-
-## 💰 Cloudflare 免费额度优化
-
-- Durable Objects 模式下，Core 与住宅状态每 5 秒通过 WebSocket 上报，面板通常 1-5 秒更新。
-- WebSocket 健康时，状态持久化和配置权威校验每 15 分钟执行一次 HTTP。
-- Dashboard WebSocket 健康时停止主数据、探针、住宅状态和 UI 活跃信号的周期 Pages 请求。
-- WebSocket 连续断开满 30 秒后，Core/住宅状态恢复 90 秒 HTTP fallback，配置恢复 300 秒检查。
-- 纯 HTTP 模式保留主数据 15 秒、探针 30 秒、住宅页面 15 秒轮询。
-- 浏览器标签隐藏时会停止非必要轮询并关闭 Dashboard WebSocket。
-- D1 schema 在每个 Worker 实例中只初始化一次，历史上报回执每小时最多清理一次。
-
-按 2 台同时运行 Core 与住宅代理的 VPS、1 个常开后台估算，健康态 Pages HTTP 主要由 15 分钟检查点产生；Durable Objects 计费请求约 3.8 万次/天。不要把 Pages HTTP 轮询设置为 1-5 秒，实时显示应由 WebSocket 完成。
-
-### Durable Objects 实时模式
-
-仓库同时提供 `realtime/` 独立 Worker，使用每台 VPS 一个 `VpsPresence` Durable Object 和一个 `DashboardHub` Durable Object：
-
-- Core Agent 与住宅管理器分别保持 Hibernation WebSocket。
-- 浏览器后台只保持一条 Dashboard WebSocket，状态变化由服务端主动推送。
-- 普通指标每 5 秒进入 Presence，最多每 5 秒向 Dashboard 合并推送一次；上下线、主备切换、出口和配置结果变化立即推送。
-- WebSocket 在线时，HTTP 仅每 15 分钟执行一次 D1 状态持久化和配置权威检查点。
-- WebSocket 断开后先重连；持续 30 秒仍未恢复时，自动切入现有 HTTP 心跳和配置轮询。
-- WebSocket 恢复后自动停止高频 HTTP 备份，不需要人工切换。
-- 未配置 `realtime_url` 或 Python WebSocket 包不可用时，系统保持纯 HTTP 模式。
-
-Realtime Worker 必须绑定与 Pages 相同的 D1，并通过 Wrangler Secret 配置与 Pages 相同的 `ADMIN_PASSWORD`。`realtime/wrangler.jsonc` 中的账户 ID、D1 ID 和 `PAGES_ORIGIN` 是部署实例参数，迁移到其他账户时必须修改。
+标准部署不需要第二条住宅命令。仅当 Core 正常、住宅组件需要单独修复时，使用该 VPS 当前 Agent Token：
 
 ```bash
-cd realtime
-wrangler secret put ADMIN_PASSWORD
-wrangler deploy
+# Debian / Ubuntu
+bash <(curl -fsSL -H "Authorization: <AGENT_TOKEN>" \
+  "https://<PAGES域名>/api/agent_update?ip=<VPS_IP>&component=proxy-installer") \
+  --domain "https://<PAGES域名>" --controller "https://<PAGES域名>" \
+  --ip "<VPS_IP>" --token "<AGENT_TOKEN>"
+
+# Alpine
+apk add --no-cache bash curl
+curl -fsSL -H "Authorization: <AGENT_TOKEN>" \
+  "https://<PAGES域名>/api/agent_update?ip=<VPS_IP>&component=proxy-installer" | \
+  bash -s -- --domain "https://<PAGES域名>" --controller "https://<PAGES域名>" \
+  --ip "<VPS_IP>" --token "<AGENT_TOKEN>"
 ```
 
-部署完成后，在生产 D1 的 `sys_config` 中将 `realtime_url` 设置为 Worker 地址。Agent、住宅管理器和浏览器会在下一次权威配置同步时自动接入。
+# 更新与发布
 
----
+## GitHub 和 Pages
 
-## 🎨 主题与高级自定义
+推送 GitHub 不等于生产已更新。必须满足：
 
-在后台的 **⚙️ 系统设置** 中，您可以自由调整大盘外观：
+1. 推送到 Pages 配置的 Production branch。
+2. Pages Production deployment 成功。
+3. `/api/agent_update` 已返回新组件和新的 `X-Agent-SHA256`。
 
-- **切换主题**：默认白、暗黑极客、新粗野主义、毛玻璃、赛博朋克、完全自定义
-- **启用二次元/自定义壁纸**：在"自定义背景图片 URL"中填入图片直链，面板自动切换为毛玻璃半透明卡片风格
-- **引入自定义脚本**：在"自定义底部 Script 注入"中填入樱花飘落、鼠标拖尾等 JS 源码（需带 `<script>` 标签），系统会通过虚拟 DOM 安全注入并立即生效
-- **站点标题**：自定义面板左上角标题
-- **弹窗公告**：配置首次访问弹窗内容
-- **自动重置流量**：开启后每月自动清零流量统计
+## VPS 自动更新
 
----
+Core Agent 每小时检查：
 
-## 🏗 项目结构
-
+```text
+/opt/kui/agent.py
+/opt/kui/realtime_client.py
 ```
+
+Proxy Manager 每小时检查：
+
+```text
+/opt/proxy_lite/lite_manager.py
+/opt/proxy_lite/proxy_server.py
+/opt/proxy_lite/realtime_client.py
+```
+
+更新流程：限制体积 → 校验 `X-Agent-SHA256` → `py_compile` → 原子替换 → 自重载。下载、校验或编译失败时保留现有组件。
+
+Agent 不直接从 GitHub Raw 更新，而是使用 Pages 的鉴权 `/api/agent_update`。公开 `/vps/*.py` 可能受 CDN 缓存影响，不应用于判断 Agent 是否已发布最新版本。
+
+# Telegram 和离线检查
+
+Pages Functions 不会自动获得 Cron Trigger。需要离线告警时，使用 Cloudflare Worker Cron、UptimeRobot 或其他调度器定期调用：
+
+```http
+POST https://你的Pages域名/api/cron_check
+Authorization: Bearer <CRON_SECRET>
+```
+
+当前 `/api/cron_check` 只检查 D1 中 Core HTTP 的 `servers.last_report`，离线阈值约 6 分钟。Realtime 健康时该字段约每 15 分钟才持久化一次，因此直接启用旧 Cron 检查会对健康 WebSocket Agent 产生误报。Realtime 模式下不要把该接口作为可靠离线告警，除非先修改后端检查 Presence，或把 HTTP 持久化间隔缩短到低于告警阈值。Agent 再次 HTTP 上报会重置告警标记，但当前代码没有恢复在线通知。
+
+Telegram Bot Token 和 Chat ID 可以在探针后台写入 D1。当前代码在存在对应 D1 行时会覆盖 Pages 的 `TG_BOT_TOKEN`、`TG_CHAT_ID`，即使 D1 值为空；因此只想使用 Pages Secret 时不要保存空的 D1 Telegram 配置。使用 Telegram Webhook 命令时必须配置 `TG_WEBHOOK_SECRET`。
+
+# 历史 Agent 迁移
+
+`LEGACY_AGENT_AUTH=true` 仅用于旧 Agent 临时迁移。它允许旧 Agent 使用管理员密码 SHA256，而不是服务器独立 Token，风险明显高于当前模式。
+
+- 新部署不要启用。
+- 旧 Agent 获取新配置并保存 `agent_token` 后立即关闭。
+- 最迟在 `2026-08-01T00:00:00Z` 后代码会拒绝该兼容模式。
+- 最稳妥方式是逐台重新执行当前面板生成的 Full Deploy Command。
+
+# 高级自定义安全提示
+
+后台的自定义 `<head>` 和底部 Script 功能会执行管理员提供的任意 HTML/JavaScript。它们没有沙箱，也不是经过 Vue 安全净化的内容。
+
+- 只允许完全可信的管理员使用。
+- 不要粘贴来源不明的主题脚本。
+- 发现异常跳转、凭据读取或网络请求时，立即清空自定义代码并轮换管理员凭据。
+
+# 故障排查
+
+## Pages 提示缺少 DB
+
+- 检查 Pages Production 环境是否绑定 D1。
+- 绑定名必须是 `DB`。
+- 修改后重新部署 Production。
+- Preview 绑定不会自动作用于 Production。
+
+## `/api/agent_update` 返回 503
+
+- 如果提示 `ASSETS binding is unavailable`，确认主应用部署为 Cloudflare Pages，而不是普通 Worker。
+- `/api/agent_update` 不会因为缺少 `PROXY_USER` 或 `PROXY_PASS` 返回 `503`。如果 `/api/proxy/config`、`/api/proxy/nodes` 或住宅组件配置请求提示缺少代理凭据，再配置它们并重新部署 Pages。
+
+## Agent 返回 401/403
+
+- VPS IP 必须已在面板登记。
+- `Authorization` 必须是该服务器自己的 `agent_token`。
+- 不要使用管理员密码、管理员哈希或其他 VPS Token。
+- 重新复制面板当前生成的 Full Deploy Command。
+
+## Worker `/health` 正常但 WebSocket 失败
+
+- 检查 `PAGES_ORIGIN` 是否完全一致。
+- 检查 Pages 和 Worker 管理员凭据是否一致。
+- 检查 Worker 和 Pages 是否绑定同一个 D1 ID。
+- 检查两个 DO 绑定名和类名。
+- 检查浏览器 Network 中 `/dashboard/ticket` 和 `/dashboard/ws`。
+- 检查 VPS 是否能出站访问 Worker `443`。
+
+## 探针不更新
+
+```bash
+systemctl status kui-agent
+journalctl -u kui-agent -n 150 --no-pager
+cat /opt/kui/config.json
+```
+
+Alpine 使用 `rc-service` 和 `/var/log/kui-agent.log`。不要把包含 Token 的完整配置发到公开渠道。
+
+## 住宅代理显示 `0 / 2` 或 `1 / 2`
+
+- 检查 `proxy-lite` 服务和日志。
+- 检查 `/dev/net/tun`。
+- 检查 OpenVPN 进程和 `tun_main`、`tun_backup`。
+- 检查 Pages 是否配置 `PROXY_USER`、`PROXY_PASS`；缺失通常返回 `503`。
+- 检查 `/api/proxy/config` 是否为 `401/403`。
+- 检查 VPS 到 VPNGate、ipify、testisp 和连通性检测目标的出站网络。
+- 所选国家可能暂时没有可用候选，或候选被数据中心筛选规则拒绝。
+
+## GitHub 已推送但 VPS 没更新
+
+- 确认推送到 Production branch。
+- 确认 Pages 生产发布完成。
+- 新 Agent 最多每小时检查一次。
+- 旧 Agent 没有新热更新逻辑时，需要重新执行 Full Deploy 完成引导。
+
+# 项目结构
+
+```text
 K-UI-main/
-├── index.html                    # SPA 单页应用（Vue 3 + Tailwind CSS）
+├── index.html
 ├── functions/
 │   └── api/
-│       └── [[path]].js           # Cloudflare Pages Functions 后端
-│                                   # 包含：API路由、协议生成、订阅解析、D1操作
+│       └── [[path]].js
+├── realtime/
+│   ├── src/
+│   │   └── index.js
+│   └── wrangler.jsonc
 └── vps/
-    ├── agent.py                  # 全能 Python Agent（监控 + 代理管理 + 心跳上报）
-    ├── kui.sh                    # VPS 智能跨系统安装脚本
-    ├── lite_manager.py           # 住宅 IP 代理双活调度引擎
-    ├── proxy_server.py           # SOCKS5 代理服务器核心
-    └── residential-proxy.sh      # 住宅代理一键安装脚本
+    ├── agent.py
+    ├── realtime_client.py
+    ├── kui.sh
+    ├── lite_manager.py
+    ├── proxy_server.py
+    └── residential-proxy.sh
 ```
 
----
+# 技术栈
 
-## 🔧 技术栈
+| 层级 | 技术 |
+|---|---|
+| 前端 | Vue 3、Tailwind CSS、ECharts、Chart.js、Leaflet |
+| 主后端 | Cloudflare Pages Functions |
+| 实时后端 | Cloudflare Worker、Hibernation WebSocket、Durable Objects |
+| 数据库 | Cloudflare D1 |
+| 代理核心 | sing-box、OpenVPN |
+| VPS 服务 | Python 3、systemd/OpenRC |
 
-| 层级 | 技术 | 说明 |
-|---|---|---|
-| 前端 | Vue 3 + Tailwind CSS | 响应式 SPA，6 大主题支持 |
-| 后端 | Cloudflare Pages Functions | 无服务器计算，自动扩缩容 |
-| 数据库 | Cloudflare D1 | 全球边缘 SQL 数据库 |
-| 探针 | ECharts + Chart.js + Leaflet | 图表可视化 + 地理地图 |
-| 代理核心 | Sing-box | 现代化代理核心 |
-| Agent | Python 3 | 系统监控 + 代理管理 |
+# 贡献与支持
 
----
+- Issues：https://github.com/a6216abcd/K-UI/issues
+- Pull Requests：https://github.com/a6216abcd/K-UI/pulls
 
-## 🔑 核心功能说明
+提交 Issue 时不要附带管理员密码、Agent Token、Cloudflare API Token、住宅代理凭据或完整 VPS 配置。
 
-### 代理协议支持
-
-| 协议 | 说明 | 适用场景 |
-|---|---|---|
-| XTLS-Reality | 基于 VLESS + Reality，最高抗封锁 | 生产环境首选 |
-| Hysteria2 | 基于 QUIC，极速低延迟 | 需要高速度 |
-| TUIC v5 | 基于 QUIC，高并发 | 多用户高并发 |
-| Trojan | 经典 Trojan 协议 | 兼容性好 |
-| H2-Reality | HTTP/2 + Reality | 伪装正常网站流量 |
-| gRPC-Reality | gRPC + Reality | 高隐蔽性 |
-| AnyTLS | 新一代抗封锁协议 | 最新抗封锁 |
-| Naive | 基于 HTTP/2 | 轻量简洁 |
-| VLESS-Argo | VLESS + Cloudflare Argo | IP 被封时隧道穿透 |
-
-### 探针监控指标
-
-- CPU 使用率 + CPU 信息
-- 内存使用率 + Swap 使用量
-- 磁盘使用率 + 已用/总量
-- 系统负载（Load Average）
-- 实时网速（入/出）+ 月度总流量
-- 进程数
-- TCP/UDP 连接数
-- 国内四网延迟（电信/联通/移动/字节跳动）24小时趋势
-
----
-
-## ❓ 常见问题
-
-**Q: 部署后提示 "DB binding not found"？**
-
-A: 请检查 Pages 项目的 **Settings → Functions → D1 database bindings** 中变量名是否为 `DB`，且绑定了正确的数据库。
-
-**Q: Agent 安装失败或下载超时？**
-
-A: 新安装器从 Pages 的鉴权更新端点下载，不再依赖 GitHub Raw 或公开静态 Python 缓存。请检查服务器 IP 是否已在面板登记、`--token` 是否为该服务器专属 Token，以及 VPS 能否出站访问 Pages 域名。
-
-**Q: 探针数据不上报？**
-
-A: 请检查：
-1. VPS 上 `kui-agent` 服务是否正常运行：`systemctl status kui-agent`
-2. 防火墙是否放行出站 HTTPS（443 端口）
-3. `/opt/kui/config.json` 中的 `api_url` 和 `token` 是否正确
-
-**Q: 住宅代理后台显示 `0 / 2`？**
-
-A: 依次检查：
-
-1. `systemctl status proxy-lite`
-2. `journalctl -u proxy-lite -n 150 --no-pager`
-3. 是否出现 `/api/proxy/config` 的 `401/403`；出现时请重新执行服务器专属住宅代理安装命令
-4. `ip -brief address show tun_main` 和 `tun_backup`
-5. `/dev/net/tun` 是否存在
-6. Pages 是否配置 `PROXY_USER`、`PROXY_PASS`
-
-**Q: 推送 GitHub 后 VPS 为什么没有更新？**
-
-A: 旧 Agent 没有热更新能力，必须执行一次新版部署命令完成引导。新版统一 Agent和住宅代理组件每小时自动更新。GitHub 推送还必须触发 Pages 生产分支部署；仅推送到未绑定的分支不会更新生产环境。
-
-**Q: 现在还需要单独运行住宅代理安装命令吗？**
-
-A: 不需要。服务器卡片的 Full Deploy Command 已自动执行住宅代理安装。独立 `residential-proxy.sh` 仅保留用于单独修复或重装住宅组件。
-
-**Q: Pages 已更新，但 `/vps/*.py` 看起来还是旧内容？**
-
-A: 公开静态 Python 路径可能存在 CDN 缓存。新版安装器与热更新使用带专属 Token 的 `/api/agent_update`，响应为 `no-store` 并带 `X-Agent-SHA256`，不依赖公开静态路径。
-
-**Q: 支持哪些系统？**
-
-A: 官方支持 Ubuntu 18-24、Debian 10-13、Alpine Linux。其他 systemd 发行版理论上也可运行，但未经过测试。
-
-**Q: 是否需要公网域名？**
-
-A: 部署 Cloudflare Pages 时需要。但 VPS Agent 通信仅需出站 HTTPS，不需要任何端口开放或域名解析。
-
----
-
-## 📝 贡献与支持
-
-如果您有任何想法或发现了 Bug，欢迎提交 [Pull Request](https://github.com/您的用户名/K-UI/compare) 或 [Issue](https://github.com/您的用户名/K-UI/issues)。
-
-### 特别感谢
-
-- [CF-Server-Monitor-Pro](https://github.com/a63414262/CF-Server-Monitor-Pro) — 探针系统基础
-- [sing-box](https://github.com/SagerNet/sing-box) — 现代化代理核心
-- [Cloudflare Pages](https://pages.cloudflare.com) — 无服务器托管平台
-- 所有为本项目贡献代码、反馈问题的社区成员
-
-### 免责声明
-
-本项目整合了众多优秀的开源协议引擎（如 Sing-box、Xray 等）。请在遵循相关国家法律法规的前提下使用本项目，仅供学习、网络环境测试及探针监控交流使用。
-
----
-
-## 📄 开源协议
-
-[MIT License](LICENSE) © 2024+ KUI Cluster Gateway Team
-
----
-
-**⭐ 如果这个项目对您有帮助，请给我们一个 Star！**
+本仓库当前未包含独立 `LICENSE` 文件，请在复制、分发或商业使用前自行确认上游项目和各依赖的许可要求。

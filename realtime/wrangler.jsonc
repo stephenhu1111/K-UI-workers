@@ -1,19 +1,17 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "kui-realtime",
-  "account_id": "2cfea154a2bf0a7587e5cccb1ae50caa",
   "main": "src/index.js",
   "compatibility_date": "2026-07-12",
   "workers_dev": true,
   "vars": {
-    "ADMIN_USERNAME": "admin",
-    "PAGES_ORIGIN": "https://k-ui2.pages.dev"
+    "ADMIN_USERNAME": "CHANGE_ME",
+    "PAGES_ORIGIN": "https://CHANGE_ME.pages.dev"
   },
   "d1_databases": [
     {
       "binding": "DB",
-      "database_name": "31",
-      "database_id": "739d037a-97e0-4724-b06a-d1b5f8459dc1"
+      "database_name": "kui-db"
     }
   ],
   "durable_objects": {
