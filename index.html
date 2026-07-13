@@ -1318,7 +1318,6 @@
                 const proxyCategoryOptions = [ { key: 'youtube', label: 'YouTube' }, { key: 'ai', label: 'AI' }, { key: 'google', label: 'Google 搜索' }, { key: 'streaming', label: '流媒体' } ];
                 const proxyCategoryActive = (vps, cat) => { const cats = (vps.proxy_categories || '').split(',').filter(Boolean); return cats.includes(cat); };
                 const toggleProxyCategory = async (vps, cat) => {
-                    if (vps.egress_status === 'pending') return;
                     if (egressModeOf(vps) !== 'residential') return;
                     const current = (vps.proxy_categories || '').split(',').filter(Boolean);
                     const idx = current.indexOf(cat);
@@ -1326,7 +1325,11 @@
                     const joined = current.join(',');
                     vps.proxy_categories = joined;
                     if (joined) vps.proxy_mode = 'selective';
-                    await updateVpsEgress(vps, 'residential', joined ? 'selective' : 'global', joined);
+                    if (vps.egress_status !== 'pending') {
+                        await updateVpsEgress(vps, 'residential', joined ? 'selective' : 'global', joined);
+                    } else {
+                        vps._proxy_categories_dirty = true;
+                    }
                 };
                 const updateVpsEgress = async (vps, mode, proxy_mode, proxy_categories) => {
                     if (vps.egress_status === 'pending') return;
@@ -1515,7 +1518,7 @@
                     if (!snapshot?.ip) return;
                     const key = normalizeRealtimeKey(snapshot.ip);
                     const resultServer = servers.value.find(item => normalizeRealtimeKey(item.ip) === key);
-                    if (resultServer && snapshot.core_config_result?.component === 'egress' && Number(snapshot.core_config_result.revision) === Number(resultServer.egress_revision)) { resultServer.egress_status = snapshot.core_config_result.success ? 'applied' : 'failed'; resultServer.egress_applied_mode = snapshot.core_config_result.applied_mode; resultServer.egress_error = snapshot.core_config_result.error || ''; if (snapshot.core_config_result.success) resultServer.egress_applied_revision = snapshot.core_config_result.revision; }
+                    if (resultServer && snapshot.core_config_result?.component === 'egress' && Number(snapshot.core_config_result.revision) === Number(resultServer.egress_revision)) { resultServer.egress_status = snapshot.core_config_result.success ? 'applied' : 'failed'; resultServer.egress_applied_mode = snapshot.core_config_result.applied_mode; resultServer.egress_error = snapshot.core_config_result.error || ''; if (snapshot.core_config_result.success) resultServer.egress_applied_revision = snapshot.core_config_result.revision; if (resultServer.egress_status === 'applied' && egressModeOf(resultServer) === 'residential' && resultServer._proxy_categories_dirty) { resultServer._proxy_categories_dirty = false; updateVpsEgress(resultServer, 'residential', proxyModeOf(resultServer), proxyCategoriesOf(resultServer)); } }
                     if (snapshot.core) {
                         const timestamp = Number(snapshot.core_last_seen || snapshot.updated_at || 0);
                         const server = servers.value.find(item => normalizeRealtimeKey(item.ip) === key);
