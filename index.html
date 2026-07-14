@@ -1018,7 +1018,7 @@
                 
                 const showWelcomePopup = ref(false);
 
-                watch(activeTab, (val) => { localStorage.setItem('monitor_preferred_tab', val); if (val === 'proxy' && isLoggedIn.value) { loadProxyPool(); setTimeout(pcInitProxy, 0); } else { pcStopProxy(); } if (val === 'thirdparty') loadThirdPartySubscriptions(); if (val === 'settings' && isLoggedIn.value && role.value === 'admin') refreshData(); if (val === 'probe') { updateCustomStyles(); updateCustomScript(probeSys.custom_script); } else { document.body.className = ''; document.getElementById('kui-custom-styles')?.remove(); document.getElementById('kui-custom-head')?.remove(); updateCustomScript(''); } });
+                watch(activeTab, (val) => { localStorage.setItem('monitor_preferred_tab', val); if (val === 'proxy' && isLoggedIn.value) { loadProxyPool(); setTimeout(pcInitProxy, 0); } else { pcStopProxy(); } if (val === 'thirdparty') loadThirdPartySubscriptions(); if (val === 'settings' && isLoggedIn.value && role.value === 'admin') loadAdminProbeServers(); if (val === 'probe') { updateCustomStyles(); updateCustomScript(probeSys.custom_script); } else { document.body.className = ''; document.getElementById('kui-custom-styles')?.remove(); document.getElementById('kui-custom-head')?.remove(); updateCustomScript(''); } });
                 watch(probeView, (val) => localStorage.setItem('monitor_preferred_view', val));
 
                 const hasCustomCssFlag = computed(() => {
@@ -1286,6 +1286,23 @@
                 };
 
                 let isFetchingKUI = false;
+                let isLoadingAdminProbeServers = false;
+                const loadAdminProbeServers = async () => {
+                    if (isLoadingAdminProbeServers || !isLoggedIn.value || role.value !== 'admin') return;
+                    isLoadingAdminProbeServers = true;
+                    try {
+                        const probeRes = await fetchApi('/api/probe/admin/data');
+                        if (!probeRes.ok) throw new Error(`Probe data request failed: ${probeRes.status}`);
+                        const probeData = await probeRes.json();
+                        Object.assign(probeSys, probeData.settings || {});
+                        if (probeData.settings?.cached_nodes_data) parseCachedNodes(probeData.settings.cached_nodes_data);
+                        adminProbeServers.value = probeData.servers || [];
+                    } catch (error) {
+                        console.error('[settings] failed to load probe servers', error);
+                    } finally {
+                        isLoadingAdminProbeServers = false;
+                    }
+                };
                 const refreshData = async () => {
                     if (isFetchingKUI) return; isFetchingKUI = true;
                     try {
@@ -1304,12 +1321,7 @@
                     
                     if (activeTab.value === 'thirdparty') loadThirdPartySubscriptions();
                     
-                    if (activeTab.value === 'settings' && role.value === 'admin') {
-                            const probeRes = await fetchApi('/api/probe/admin/data'); const probeData = await probeRes.json();
-                            Object.assign(probeSys, probeData.settings);
-                            if (probeData.settings.cached_nodes_data) parseCachedNodes(probeData.settings.cached_nodes_data);
-                            adminProbeServers.value = probeData.servers || [];
-                        }
+                    if (activeTab.value === 'settings' && role.value === 'admin') loadAdminProbeServers();
                     } catch(e) {} finally { isFetchingKUI = false; }
                 };
 
