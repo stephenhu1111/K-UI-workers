@@ -55,7 +55,9 @@ realtime_channel = None
 config_wakeup = threading.Event()
 heartbeat_wakeup = threading.Event()
 last_http_report = 0
-REALTIME_HTTP_INTERVAL = 900
+# Persist a regular HTTP snapshot even while realtime is connected. This keeps
+# the dashboard usable when a Durable Object websocket reconnects or is stale.
+REALTIME_HTTP_INTERVAL = 60
 REALTIME_STATUS_ACTIVE_INTERVAL = 5
 REALTIME_STATUS_IDLE_INTERVAL = 30
 realtime_status_interval = REALTIME_STATUS_ACTIVE_INTERVAL

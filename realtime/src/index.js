@@ -81,7 +81,10 @@ function compactRoleState(role, data) {
     const keys = ["cpu", "mem", "disk", "load", "uptime", "net_in_speed", "net_out_speed", "tcp_conn", "udp_conn", "os", "arch"];
     return Object.fromEntries(keys.filter(key => data?.[key] !== undefined).map(key => [key, data[key]]));
   }
-  return { details: Array.isArray(data?.details) ? data.details.slice(0, 4).map(item => ({ tunnel: String(item?.tunnel || "").slice(0, 32), active: item?.active === true, node_ip: String(item?.node_ip || "").slice(0, 64), exit_ip: String(item?.exit_ip || "").slice(0, 64), country: String(item?.country || "").slice(0, 2), port: Number(item?.port) || 0, ready: item?.ready === true, connected_time: Math.max(0, Math.min(Number(item?.connected_time) || 0, 31536000)) })) : [] };
+  return {
+    details: Array.isArray(data?.details) ? data.details.slice(0, 4).map(item => ({ tunnel: String(item?.tunnel || "").slice(0, 32), active: item?.active === true, node_ip: String(item?.node_ip || "").slice(0, 64), exit_ip: String(item?.exit_ip || "").slice(0, 64), country: String(item?.country || "").slice(0, 2), port: Number(item?.port) || 0, ready: item?.ready === true, connected_time: Math.max(0, Math.min(Number(item?.connected_time) || 0, 31536000)) })) : [],
+    logs: String(data?.logs || "").slice(0, 16 * 1024),
+  };
 }
 
 async function verifyAdmin(header, request, env) {

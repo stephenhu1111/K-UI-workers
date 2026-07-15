@@ -1987,15 +1987,22 @@ body.theme11 #app, body.theme13 #app, body.theme14 #app, body.theme15 #app, body
             try {
                 let servers = [];
                 const realtimeSnapshots = Object.values(window.kuiRealtimeProxySnapshots || {});
-                if (!window.kuiRealtimeConnected) {
+                // Realtime is a fast path only. Keep an HTTP snapshot so a missing proxy
+                // socket or an incomplete realtime patch cannot hide persisted tunnel data.
+                if (Date.now() - lastPcHttpFetch >= 15000) {
                     const auth = await getPcAuthHeader('GET', '/api/proxy/nodes');
                     const res = await fetch(`/api/proxy/nodes?t=${Date.now()}`, { headers: { 'Authorization': auth } });
+                    if (!res.ok) throw new Error(`proxy nodes ${res.status}`);
                     pcHttpServers = await res.json(); lastPcHttpFetch = Date.now();
                 }
                 servers = pcHttpServers.slice();
                 if (realtimeSnapshots.length) {
                     const byIp = new Map(servers.map(server => [server.ip, server]));
-                    realtimeSnapshots.forEach(snapshot => { const previous = byIp.get(snapshot.ip) || {}; byIp.set(snapshot.ip, { ...previous, ip: snapshot.ip, details: snapshot.proxy?.details ? JSON.stringify(snapshot.proxy.details) : (previous.details || '[]'), last_seen: snapshot.proxy_last_seen || snapshot.updated_at || previous.last_seen, logs: snapshot.proxy?.logs ?? previous.logs ?? '' }); });
+                    realtimeSnapshots.forEach(snapshot => {
+                        const previous = byIp.get(snapshot.ip) || {};
+                        const realtimeDetails = Array.isArray(snapshot.proxy?.details) && snapshot.proxy.details.length ? JSON.stringify(snapshot.proxy.details) : previous.details || '[]';
+                        byIp.set(snapshot.ip, { ...previous, ip: snapshot.ip, details: realtimeDetails, last_seen: snapshot.proxy_last_seen || snapshot.updated_at || previous.last_seen, logs: snapshot.proxy?.logs || previous.logs || '' });
+                    });
                     servers = Array.from(byIp.values());
                 }
                 const tbody = document.getElementById('pc-nodes-table');
