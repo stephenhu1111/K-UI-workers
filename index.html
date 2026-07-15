@@ -1679,9 +1679,18 @@
                 const stopProbePolling = () => { if (probeTimer) { clearInterval(probeTimer); probeTimer = null; } };
                 const stopPolling = () => { if (dataTimer) { clearInterval(dataTimer); dataTimer = null; } if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } };
 
-                onMounted(() => {
-                    fetchProbeData(); startProbePolling();
-                    if (authKey.value && currentUser.value) { isLoggedIn.value = true; if (role.value !== 'admin' && activeTab.value === 'proxy') activeTab.value = 'dashboard'; startPolling(); if (activeTab.value === 'proxy') setTimeout(pcInitProxy, 0); }
+                onMounted(async () => {
+                    if (authKey.value && currentUser.value) {
+                        isLoggedIn.value = true;
+                        if (role.value !== 'admin' && activeTab.value === 'proxy') activeTab.value = 'dashboard';
+                        if (role.value === 'admin') {
+                            await refreshData();
+                            queueMicrotask(connectRealtime);
+                        } else startPolling();
+                        if (activeTab.value === 'proxy') setTimeout(pcInitProxy, 0);
+                    }
+                    await fetchProbeData();
+                    if (!isLoggedIn.value || role.value !== 'admin') startProbePolling();
                     document.addEventListener('visibilitychange', () => { if (document.hidden) { realtimeGeneration++; realtimeDisconnectedAt = 0; publicRealtimeDisconnectedAt = 0; stopPolling(); stopProbePolling(); clearInterval(realtimePingTimer); clearInterval(publicRealtimeActivityTimer); clearTimeout(realtimeFallbackTimer); clearTimeout(realtimeReconnectTimer); clearTimeout(publicRealtimeReconnectTimer); const socket = realtimeSocket; realtimeSocket = null; socket?.close(); const publicSocket = publicRealtimeSocket; publicRealtimeSocket = null; publicSocket?.close(); realtimeConnected.value = false; window.kuiRealtimeConnected = false; } else if (isLoggedIn.value && role.value === 'admin' && realtimeUrl.value) { connectRealtime(); scheduleRealtimeFallback(); } else if (!isLoggedIn.value && realtimeUrl.value && probeSys.is_public === 'true') { connectPublicRealtime(); } else { if (isLoggedIn.value) startPolling(); startProbePolling(); } });
                 });
 
