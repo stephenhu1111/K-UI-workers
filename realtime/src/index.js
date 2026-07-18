@@ -39,9 +39,13 @@ function isPagesDevOrigin(origin) {
   try { return new URL(origin).protocol === "https:" && /^[a-z0-9-]+\.pages\.dev$/i.test(new URL(origin).hostname); } catch { return false; }
 }
 
+function isWorkersDevOrigin(origin) {
+  try { return new URL(origin).protocol === "https:" && /^[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev$/i.test(new URL(origin).hostname); } catch { return false; }
+}
+
 function isAllowedPagesOrigin(origin, env) {
   const configured = pagesOrigins(env);
-  return configured.length ? configured.includes(origin) : isPagesDevOrigin(origin);
+  return configured.length ? configured.includes(origin) : (isPagesDevOrigin(origin) || isWorkersDevOrigin(origin));
 }
 
 function requestPagesOrigin(request, env) {
