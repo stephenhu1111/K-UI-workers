@@ -122,8 +122,23 @@ def get_c2_headers():
         "Authorization": f"Basic {auth_ptr}"
     }
 
+def c2_request(url, *, data=None, method=None):
+    """Retry transient Cloudflare/control-plane read stalls before failing."""
+    last_error = None
+    for attempt in range(3):
+        try:
+            request = urllib.request.Request(url, data=data, headers=get_c2_headers(), method=method)
+            with urllib.request.urlopen(request, timeout=30) as response:
+                return response.read()
+        except Exception as error:
+            last_error = error
+            if attempt < 2: time.sleep(2 ** attempt)
+    raise last_error
+
 def check_for_updates():
     global last_update_check
+    if os.environ.get("KUI_DISABLE_AUTO_UPDATE") == "1":
+        return
     now = time.time()
     if not AGENT_TOKEN or now - last_update_check < 3600:
         return
@@ -199,14 +214,11 @@ def fetch_controller_config():
     base = C2_URL.rstrip('/')
     url = f"{base}{C2_API_PREFIX}/config?ip={VPS_IP}"
     try:
-        req = urllib.request.Request(url, headers=get_c2_headers())
-        with urllib.request.urlopen(req, timeout=10) as res:
-            raw = res.read().decode("utf-8")
-            data = json.loads(raw)
-            if isinstance(data, dict) and (data.get("0") or data.get("country")):
-                return data
-            else:
-                print(f"[cfg] 端点返回数据缺少地区字段(0/country)，跳过: {raw}", flush=True)
+        raw = c2_request(url).decode("utf-8")
+        data = json.loads(raw)
+        if isinstance(data, dict) and (data.get("0") or data.get("country")):
+            return data
+        print(f"[cfg] 端点返回数据缺少地区字段(0/country)，跳过: {raw}", flush=True)
     except Exception as e:
         print(f"[cfg] 拉取配置失败({url}): {e}", flush=True)
     return None
@@ -317,8 +329,7 @@ def c2_heartbeat_loop():
             if realtime_channel and realtime_channel.enabled and not websocket_sent and time.time() - realtime_channel.last_disconnected < 30:
                 fallback_ready = False
             if (websocket_sent and time.time() - last_http_report >= REALTIME_HTTP_INTERVAL) or (not websocket_sent and fallback_ready):
-                req = urllib.request.Request(f"{C2_URL}{C2_API_PREFIX}/report", data=json.dumps(status).encode('utf-8'), headers=get_c2_headers(), method='POST')
-                with urllib.request.urlopen(req, timeout=10) as response: response.read(1)
+                c2_request(f"{C2_URL}{C2_API_PREFIX}/report", data=json.dumps(status).encode('utf-8'), method='POST')
                 last_http_report = time.time()
         except Exception as error:
             print(f"[c2] 状态上报失败: {error}", flush=True)
